@@ -52,8 +52,6 @@
       text-overflow: ellipsis;
       flex: 1;
       min-width: 0;
-      direction: rtl;
-      text-align: left;
     }
     .panel-close {
       display: inline-flex;
@@ -333,23 +331,33 @@
 
     // Typography (only if element has direct text)
     if (U.hasText(el)) {
-      body.appendChild(
-        section('Typography', [
-          row('Font', U.firstFont(cs.fontFamily)),
-          row('Size', `${U.fmt(parseFloat(cs.fontSize))}px`),
-          row('Weight', U.weightName(cs.fontWeight)),
-          row(
-            'Line',
-            cs.lineHeight === 'normal' ? 'normal' : `${U.fmt(parseFloat(cs.lineHeight))}px`
-          ),
-          row(
-            'Letter',
-            cs.letterSpacing === 'normal' ? '0' : cs.letterSpacing
-          ),
-          rowColor('Color', cs.color),
-          row('Align', cs.textAlign),
-        ])
+      const rootSize =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const fontPx = parseFloat(cs.fontSize);
+      const fontRem = (fontPx / rootSize).toFixed(fontPx / rootSize >= 1 ? 2 : 3);
+
+      const text = U.directText(el);
+      const preview = text.length > 40 ? text.slice(0, 40) + '…' : text;
+
+      const bg = U.effectiveBackground(el);
+      const ratio = U.contrastRatio(cs.color, bg);
+
+      const typoRows = [];
+      if (preview) typoRows.push(row('Text', `"${preview}"`));
+      typoRows.push(
+        row('Font', U.firstFont(cs.fontFamily)),
+        row('Size', `${U.fmt(fontPx)}px · ${fontRem}rem`),
+        row('Weight', U.weightName(cs.fontWeight)),
+        row(
+          'Line',
+          cs.lineHeight === 'normal' ? 'normal' : `${U.fmt(parseFloat(cs.lineHeight))}px`
+        ),
+        row('Letter', cs.letterSpacing === 'normal' ? '0' : cs.letterSpacing),
+        rowColor('Color', cs.color),
+        row('Align', cs.textAlign)
       );
+      if (ratio !== null) typoRows.push(rowGraded('Contrast', ratio));
+      body.appendChild(section('Typography', typoRows));
     }
 
     // Fill
@@ -404,6 +412,33 @@
     r.appendChild(l);
     r.appendChild(v);
     r.addEventListener('click', () => copy(value));
+    return r;
+  }
+
+  // Row variant for WCAG contrast: shows the ratio plus a small AAA / AA /
+  // Fail badge, color-coded by grade. Click copies the bare ratio.
+  function rowGraded(label, ratio) {
+    const grade = ratio >= 7 ? 'AAA' : ratio >= 4.5 ? 'AA' : 'Fail';
+    const color = ratio >= 7 ? '#34c759' : ratio >= 4.5 ? '#ffd60a' : '#ff453a';
+    const display = ratio.toFixed(2);
+    const r = document.createElement('div');
+    r.className = 'panel-row';
+    const l = document.createElement('span');
+    l.className = 'label';
+    l.textContent = label;
+    const v = document.createElement('span');
+    v.className = 'value';
+    const num = document.createElement('span');
+    num.textContent = display;
+    const badge = document.createElement('span');
+    badge.textContent = grade;
+    badge.style.cssText = `color: ${color}; font-weight: 600; font-size: 10px; padding: 1px 5px; background: ${color}1f; border-radius: 3px;`;
+    v.appendChild(num);
+    v.appendChild(badge);
+    v.title = `${display} (${grade})`;
+    r.appendChild(l);
+    r.appendChild(v);
+    r.addEventListener('click', () => copy(display));
     return r;
   }
 

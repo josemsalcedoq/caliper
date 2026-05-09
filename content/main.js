@@ -45,6 +45,7 @@
     if (listenersAttached) return;
     listenersAttached = true;
     document.addEventListener('mousemove', onMouseMove, true);
+    document.addEventListener('mouseleave', onMouseLeave, true);
     document.addEventListener('click', onClick, true);
     document.addEventListener('auxclick', onClick, true);
     document.addEventListener('mousedown', onMouseDown, true);
@@ -59,6 +60,7 @@
     if (!listenersAttached) return;
     listenersAttached = false;
     document.removeEventListener('mousemove', onMouseMove, true);
+    document.removeEventListener('mouseleave', onMouseLeave, true);
     document.removeEventListener('click', onClick, true);
     document.removeEventListener('auxclick', onClick, true);
     document.removeEventListener('mousedown', onMouseDown, true);
@@ -90,6 +92,18 @@
     if (!target || target === S.hovered) return;
     S.hovered = target;
     scheduleRender();
+  }
+
+  // Cursor left the document (URL bar, devtools, another tab). Drop the
+  // hover so we don't leave a stale outline drawn until the user comes
+  // back. The selection is kept -- only the transient hover is cleared.
+  function onMouseLeave(e) {
+    if (!S.active) return;
+    if (e.target !== document.documentElement && e.target !== document) return;
+    if (S.hovered) {
+      S.hovered = null;
+      scheduleRender();
+    }
   }
 
   function onClick(e) {

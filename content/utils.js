@@ -66,9 +66,12 @@
 
   U.tagPath = (el) => {
     if (!el) return '';
+    // Two segments is enough context (parent › self) and short enough that
+    // we don't need the direction:rtl hack to truncate from the start --
+    // standard text-overflow: ellipsis works.
     const parts = [];
     let cur = el;
-    while (cur && cur !== document.documentElement && parts.length < 4) {
+    while (cur && cur !== document.documentElement && parts.length < 2) {
       parts.unshift(U.tagDescriptor(cur));
       cur = cur.parentElement;
     }
@@ -134,5 +137,49 @@
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) return true;
     }
     return false;
+  };
+
+  // Direct text content (text nodes only, no descendants), collapsed and trimmed.
+  U.directText = (el) => {
+    if (!el) return '';
+    let out = '';
+    for (const node of el.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) out += node.textContent;
+    }
+    return out.replace(/\s+/g, ' ').trim();
+  };
+
+  // Walk up the ancestor chain and return the first non-transparent
+  // background color. Falls back to white. Used for contrast checks --
+  // ignores partial alpha for simplicity.
+  U.effectiveBackground = (el) => {
+    let cur = el;
+    while (cur && cur !== document.documentElement) {
+      const cs = getComputedStyle(cur);
+      const bg = cs.backgroundColor;
+      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+        const m = bg.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/i);
+        if (m && (m[4] === undefined || parseFloat(m[4]) > 0.5)) return bg;
+      }
+      cur = cur.parentElement;
+    }
+    return 'rgb(255, 255, 255)';
+  };
+
+  // WCAG 2.1 relative luminance contrast ratio between two CSS color strings.
+  U.contrastRatio = (a, b) => {
+    const rel = (str) => {
+      const m = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+      if (!m) return null;
+      const lin = (c) => {
+        const v = c / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * lin(+m[1]) + 0.7152 * lin(+m[2]) + 0.0722 * lin(+m[3]);
+    };
+    const la = rel(a);
+    const lb = rel(b);
+    if (la === null || lb === null) return null;
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
   };
 })();

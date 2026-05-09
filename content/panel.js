@@ -281,7 +281,7 @@
       </header>
       <div class="panel-body"></div>
       <footer class="panel-footer">
-        <span class="hint"><kbd>Alt</kbd> + hover · distance</span>
+        <span class="hint">Hover any element · distance</span>
         <span class="hint"><kbd>Esc</kbd> · deselect</span>
       </footer>
     `;

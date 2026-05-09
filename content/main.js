@@ -26,7 +26,6 @@
     S.active = false;
     S.hovered = null;
     S.selected = null;
-    S.altPressed = false;
     detachListeners();
     A.panel.hide();
     A.overlay.tearDown();
@@ -51,11 +50,9 @@
     document.addEventListener('mousedown', onMouseDown, true);
     document.addEventListener('mouseup', onMouseUp, true);
     document.addEventListener('keydown', onKeyDown, true);
-    document.addEventListener('keyup', onKeyUp, true);
     document.addEventListener('contextmenu', onContextMenu, true);
     window.addEventListener('scroll', scheduleRender, true);
     window.addEventListener('resize', scheduleRender);
-    window.addEventListener('blur', onWindowBlur);
   }
 
   function detachListeners() {
@@ -67,11 +64,9 @@
     document.removeEventListener('mousedown', onMouseDown, true);
     document.removeEventListener('mouseup', onMouseUp, true);
     document.removeEventListener('keydown', onKeyDown, true);
-    document.removeEventListener('keyup', onKeyUp, true);
     document.removeEventListener('contextmenu', onContextMenu, true);
     window.removeEventListener('scroll', scheduleRender, true);
     window.removeEventListener('resize', scheduleRender);
-    window.removeEventListener('blur', onWindowBlur);
   }
 
   function addCursorStyle() {
@@ -147,30 +142,6 @@
       } else {
         deactivate();
       }
-      return;
-    }
-    if (e.key === 'Alt' || e.altKey) {
-      if (!S.altPressed) {
-        S.altPressed = true;
-        scheduleRender();
-      }
-    }
-  }
-
-  function onKeyUp(e) {
-    if (!S.active) return;
-    if (e.key === 'Alt' || !e.altKey) {
-      if (S.altPressed) {
-        S.altPressed = false;
-        scheduleRender();
-      }
-    }
-  }
-
-  function onWindowBlur() {
-    if (S.altPressed) {
-      S.altPressed = false;
-      scheduleRender();
     }
   }
 
@@ -196,7 +167,12 @@
     A.overlay.clear();
     if (S.selected) {
       A.overlay.renderSelection(S.selected);
-      if (S.altPressed && S.hovered && S.hovered !== S.selected) {
+      // Distance is now always shown when the cursor is over a different
+      // element than the selection -- no Alt modifier required. The hovered
+      // element gets its own outline + dimension pill so the user can see
+      // the two endpoints of the measurement at a glance.
+      if (S.hovered && S.hovered !== S.selected) {
+        A.overlay.renderHover(S.hovered);
         A.overlay.renderDistance(S.selected, S.hovered);
       }
       A.panel.show(S.selected);

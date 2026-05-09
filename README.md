@@ -14,7 +14,7 @@ A Chrome extension that turns the page into a Figma-like inspect surface: hover 
   - Fill — background color (with swatch + hex)
   - Border — width, style, color, radius
   - Effects — shadow, opacity
-- **Alt + hover** another element → measured distance between the two on each axis (the Figma magic).
+- **Move the cursor** to another element after locking a selection → measured distance between the two on each axis is drawn instantly. No modifier key required.
 - **Click any panel row** → copies the value to the clipboard.
 - **Esc** → deselect, then exit.
 

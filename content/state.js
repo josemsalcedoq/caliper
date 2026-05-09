@@ -3,7 +3,6 @@ window.__UXAlign = window.__UXAlign || {
     active: false,
     hovered: null,
     selected: null,
-    altPressed: false,
   },
   shadow: null,
   hostEl: null,

@@ -148,12 +148,16 @@
     return below;
   }
 
+  // Render functions are additive: each appends to its layer without
+  // clearing. main.js's render() calls O.clear() once per frame and then
+  // composes by calling whichever combination of renderHover / renderSelection
+  // / renderDistance is appropriate for the current state.
+
   O.renderHover = function (el) {
     ensureRoot();
     if (!el) return;
     const box = window.__UXAlign.utils.getBox(el);
     const layer = A.layers.box;
-    layer.replaceChildren();
     layer.appendChild(makeOutline(box));
     const fmt = window.__UXAlign.utils.fmt;
     const text = `${fmt(box.w)} × ${fmt(box.h)}`;
@@ -166,7 +170,6 @@
     const U = window.__UXAlign.utils;
     const box = U.getBox(el);
     const layer = A.layers.box;
-    layer.replaceChildren();
 
     const { padding, margin } = box;
 
@@ -215,7 +218,6 @@
     const a = U.getBox(fromEl);
     const b = U.getBox(toEl);
     const layer = A.layers.distance;
-    layer.replaceChildren();
 
     // X axis
     let xGap = null;

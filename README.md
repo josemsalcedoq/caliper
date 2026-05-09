@@ -66,9 +66,21 @@ ux-align/
 python3 icons/generate.py
 ```
 
-## Limitations of v0.1
+## Iframes
 
-- Top frame only (no iframes).
+The inspector runs in **every frame** (top + each iframe, including cross-origin ones with `<all_urls>` permission). Each frame inspects independently:
+
+- Hovering inside an iframe shows the dimension pill within that iframe.
+- Clicking inside an iframe selects an element there and shows the panel inside that iframe.
+- Distance lines stay within a single frame.
+- Pressing **Esc** in any frame deactivates the inspector across **all** frames in the tab (the service worker relays it).
+
+Iframes that lazy-load *after* you activate the inspector will start with the inspector off. Toggle off and on to resync.
+
+## Limitations
+
+- Selecting in multiple frames at once produces multiple panels (one per frame). Distance measurements never cross a frame boundary — design tradeoff to avoid cross-origin postMessage plumbing in v0.2.
+- Sandboxed iframes that disallow scripts (`<iframe sandbox>` without `allow-scripts`) can't be inspected — Chrome doesn't inject content scripts there.
 - No persistence of selection across reloads.
 - No comparison against a Figma file (planned for a later version).
 - Chrome only. Firefox / Safari ports come after the model stabilizes.

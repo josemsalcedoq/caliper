@@ -106,6 +106,20 @@ Funcionalidad mínima para considerar la herramienta utilizable:
 - Modo persistente: que la selección sobreviva navegaciones/recargas.
 - Empaquetado como app de escritorio (`.dmg` Tauri/Electron) que embeba la extensión vía CDP.
 
+## v0.2 — soporte para iframes (implementado)
+
+- [x] `manifest.content_scripts.all_frames: true` → el inspector vive en cada frame (top + cada iframe, incluyendo cross-origin con `<all_urls>`).
+- [x] Cada frame inspecciona de forma **independiente** (modelo "Option A"): hover, selección y distance funcionan localmente; cada frame tiene su propio shadow DOM, su propio panel y su propio estado.
+- [x] **Esc global**: cuando un frame se desactiva por Esc, manda `uxalign/global-deactivate` al service worker, que broadcastea `uxalign/deactivate` a todos los frames del tab. Los receptores son idempotentes y no re-emiten para evitar bucles.
+- [x] El popup consulta estado al **top frame específicamente** (`frameId: 0`) — sin esto, una respuesta de un iframe desincronizado podía mostrar estado incorrecto.
+- [x] El handler de `uxalign/toggle` recibido vía broadcast pasa `{broadcast: false}` al `deactivate()` para no disparar una segunda ola innecesaria.
+
+### Trade-offs aceptados en v0.2
+- Distance entre frames distintos no se dibuja (cada frame solo conoce su propio sistema de coordenadas; cruzar el límite de un iframe sin postMessage entre orígenes diferentes era costo desproporcionado).
+- Múltiples paneles visibles si el usuario selecciona en frames distintos — preferimos esto a meter latencia de postMessage en el camino del hover.
+- Drift en iframes lazy-loaded: los frames insertados después de activar arrancan con el inspector apagado. Workaround: toggle off/on para resincronizar. Solución completa requiere que el SW guarde estado por tab (post-v0.2).
+- Iframes pequeños recortan el panel (280px no cabe en un widget de 200×100). El caso real (inspeccionar contenido relevante) suele estar en frames grandes; aceptable.
+
 ## Notas y referencias
 
 - Figma — modo inspect / dev mode.

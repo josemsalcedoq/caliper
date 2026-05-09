@@ -1,5 +1,5 @@
 (function () {
-  const A = window.__UXAlign;
+  const A = window.__Caliper;
   const S = A.state;
 
   let renderQueued = false;
@@ -36,7 +36,7 @@
     // turn off in lockstep. Receivers pass {broadcast: false} to avoid loops.
     if (opts.broadcast !== false) {
       try {
-        chrome.runtime.sendMessage({ type: 'uxalign/global-deactivate' });
+        chrome.runtime.sendMessage({ type: 'caliper/global-deactivate' });
       } catch (_) {}
     }
   }
@@ -72,7 +72,7 @@
   function addCursorStyle() {
     if (cursorStyleEl) return;
     cursorStyleEl = document.createElement('style');
-    cursorStyleEl.id = 'ux-align-cursor';
+    cursorStyleEl.id = 'caliper-cursor';
     cursorStyleEl.textContent =
       '*, *::before, *::after { cursor: crosshair !important; }';
     document.documentElement.appendChild(cursorStyleEl);
@@ -183,14 +183,14 @@
 
   function notify(active) {
     try {
-      chrome.runtime.sendMessage({ type: 'uxalign/state', active });
+      chrome.runtime.sendMessage({ type: 'caliper/state', active });
     } catch (_) {
       /* no-op */
     }
   }
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg?.type === 'uxalign/toggle') {
+    if (msg?.type === 'caliper/toggle') {
       // The toggle is broadcast by the SW/popup to every frame in the tab,
       // so each frame already learns about the state change directly. Skip
       // the global re-broadcast on deactivate to avoid a duplicate wave.
@@ -199,11 +199,11 @@
       sendResponse({ active: S.active });
       return;
     }
-    if (msg?.type === 'uxalign/query-state') {
+    if (msg?.type === 'caliper/query-state') {
       sendResponse({ active: S.active });
       return;
     }
-    if (msg?.type === 'uxalign/deactivate') {
+    if (msg?.type === 'caliper/deactivate') {
       deactivate({ broadcast: false });
       sendResponse({ active: false });
       return;

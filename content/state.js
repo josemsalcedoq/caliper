@@ -1,4 +1,4 @@
-window.__UXAlign = window.__UXAlign || {
+window.__Caliper = window.__Caliper || {
   state: {
     active: false,
     hovered: null,

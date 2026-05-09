@@ -1,19 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "UX Align",
-  "short_name": "UX Align",
-  "version": "0.4.0",
+  "name": "Caliper",
+  "short_name": "Caliper",
+  "version": "0.5.0",
   "description": "Inspect any web UI like Figma — measure, align, and verify pixel-perfect implementations without opening DevTools.",
   "permissions": ["activeTab"],
   "host_permissions": ["<all_urls>"],
   "browser_specific_settings": {
     "gecko": {
-      "id": "ux-align@uxalign.dev",
+      "id": "caliper@caliper.dev",
       "strict_min_version": "121.0"
     }
   },
   "action": {
-    "default_title": "UX Align — toggle inspector",
+    "default_title": "Caliper — toggle inspector",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -40,12 +40,12 @@
     }
   ],
   "commands": {
-    "toggle-uxalign": {
+    "toggle-caliper": {
       "suggested_key": {
         "default": "Ctrl+Shift+U",
         "mac": "Command+Shift+U"
       },
-      "description": "Toggle UX Align inspection mode"
+      "description": "Toggle Caliper inspection mode"
     }
   },
   "icons": {

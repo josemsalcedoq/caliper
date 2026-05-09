@@ -1,4 +1,4 @@
-"""Generate UX Align PNG icons from scratch (stdlib only).
+"""Generate Caliper PNG icons from scratch (stdlib only).
 
 Design: a Figma-blue selection frame with four small filled corner handles,
 on a transparent background. Run:

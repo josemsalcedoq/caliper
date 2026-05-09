@@ -1,5 +1,5 @@
 (function () {
-  const A = window.__UXAlign;
+  const A = window.__Caliper;
   const O = (A.overlay = {});
 
   const OVERLAY_STYLES = `
@@ -77,7 +77,7 @@
     }
     if (A.hostEl) return;
     const host = document.createElement('div');
-    host.id = 'ux-align-root';
+    host.id = 'caliper-root';
     host.style.cssText =
       'all: initial; position: absolute; top: 0; left: 0; width: 0; height: 0; pointer-events: none; z-index: 2147483647;';
     const shadow = host.attachShadow({ mode: 'closed' });
@@ -164,11 +164,11 @@
   O.renderHover = function (el) {
     ensureRoot();
     if (!el) return;
-    const box = window.__UXAlign.utils.getBox(el);
+    const box = window.__Caliper.utils.getBox(el);
     if (box.w <= 0 || box.h <= 0) return;
     const layer = A.layers.box;
     layer.appendChild(makeOutline(box));
-    const fmt = window.__UXAlign.utils.fmt;
+    const fmt = window.__Caliper.utils.fmt;
     const text = `${fmt(box.w)} × ${fmt(box.h)}`;
     layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
   };
@@ -176,7 +176,7 @@
   O.renderSelection = function (el) {
     ensureRoot();
     if (!el) return;
-    const U = window.__UXAlign.utils;
+    const U = window.__Caliper.utils;
     const box = U.getBox(el);
     if (box.w <= 0 || box.h <= 0) return;
     const layer = A.layers.box;
@@ -224,7 +224,7 @@
   O.renderDistance = function (fromEl, toEl) {
     ensureRoot();
     if (!fromEl || !toEl || fromEl === toEl) return;
-    const U = window.__UXAlign.utils;
+    const U = window.__Caliper.utils;
     const a = U.getBox(fromEl);
     const b = U.getBox(toEl);
     if (a.w <= 0 || a.h <= 0 || b.w <= 0 || b.h <= 0) return;

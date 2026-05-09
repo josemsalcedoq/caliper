@@ -1,5 +1,5 @@
 (function () {
-  const A = window.__UXAlign;
+  const A = window.__Caliper;
   const P = (A.panel = {});
 
   // Exposed so overlay.js's ensureRoot can inject these styles together

@@ -1,4 +1,4 @@
-# UX Align — Figma-style web UI inspector
+# Caliper — Figma-style web UI inspector
 
 > Hover any element to measure it. Click to inspect every CSS property in one panel. Move the cursor to see the distance between two elements drawn live in red — no DevTools, no guesswork.
 
@@ -8,7 +8,7 @@
 ![Firefox](https://img.shields.io/badge/firefox-121%2B-orange.svg)
 ![Safari](https://img.shields.io/badge/safari-16.4%2B-blue.svg)
 
-UX Align is a cross-browser web extension that turns any page into a Figma-style inspect surface. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. UX Align collapses that loop into hover-and-click.
+Caliper is a cross-browser web extension that turns any page into a Figma-style inspect surface. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. Caliper collapses that loop into hover-and-click.
 
 Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who want a CSS inspector that thinks like a design tool, not a debugger.
 
@@ -51,7 +51,7 @@ A typical pixel-perfect QA loop in vanilla DevTools:
 7. Compare the two numbers.
 8. Repeat for the next property.
 
-UX Align: hover, click, read the panel. Done.
+Caliper: hover, click, read the panel. Done.
 
 ---
 
@@ -84,10 +84,10 @@ Customise the shortcut at `about:addons` → ⚙ → **Manage Extension Shortcut
 Apple ships every Safari extension inside a host app, so there is no "load unpacked" — but the conversion is one command:
 
 ```sh
-xcrun safari-web-extension-converter /path/to/ux-align
+xcrun safari-web-extension-converter /path/to/caliper
 ```
 
-That generates an Xcode project. Build & run it once (⌘R), then in Safari → Settings → **Extensions** → enable **UX Align**. For unsigned development builds, also enable Safari → Develop → **Allow Unsigned Extensions** (resets when you quit Safari unless you sign with an Apple Developer ID).
+That generates an Xcode project. Build & run it once (⌘R), then in Safari → Settings → **Extensions** → enable **Caliper**. For unsigned development builds, also enable Safari → Develop → **Allow Unsigned Extensions** (resets when you quit Safari unless you sign with an Apple Developer ID).
 
 Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar icon, or assign one in System Settings → Keyboard → Keyboard Shortcuts → App Shortcuts.
 
@@ -95,7 +95,7 @@ Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar
 
 ## How to use
 
-1. Click the UX Align icon in the toolbar, or press the keyboard shortcut.
+1. Click the Caliper icon in the toolbar, or press the keyboard shortcut.
 2. The page cursor switches to a crosshair and a blue dot appears on the toolbar badge.
 3. **Hover** anything to see its size.
 4. **Click** to lock it as the selection. The side panel opens at the top-right with every property grouped.
@@ -107,7 +107,7 @@ Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar
 
 ## How it compares
 
-| Capability | Browser DevTools | PerfectPixel | VisBug | **UX Align** |
+| Capability | Browser DevTools | PerfectPixel | VisBug | **Caliper** |
 |---|---|---|---|---|
 | Live measurements on hover | Computed styles only | — | Inline tooltips | **Yes — outline + dimension pill** |
 | Distance between two elements | — | — | — | **Yes — drawn live, no Alt key** |
@@ -117,7 +117,7 @@ Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar
 | Iframe support | Per-frame switching | — | — | **Yes — auto, every frame** |
 | Source license | Browser-bundled | Limited | MIT | **PolyForm Noncommercial** |
 
-UX Align is not a replacement for DevTools — keep DevTools for everything beyond visual inspection. It's the missing layer between Figma and DevTools for the moment when you're trying to ship the implementation that matches the mockup.
+Caliper is not a replacement for DevTools — keep DevTools for everything beyond visual inspection. It's the missing layer between Figma and DevTools for the moment when you're trying to ship the implementation that matches the mockup.
 
 ---
 
@@ -126,13 +126,13 @@ UX Align is not a replacement for DevTools — keep DevTools for everything beyo
 Single source folder. Every file is plain JavaScript or HTML; the manifest loads the content scripts in dependency order.
 
 ```
-ux-align/
+caliper/
 ├── manifest.json              MV3 manifest, browser_specific_settings.gecko for Firefox
 ├── LICENSE                    MIT
 ├── background/
 │   └── service-worker.js      keyboard relay, badge state, global Esc broadcast
 ├── content/                   loaded into every frame in the tab
-│   ├── state.js               window.__UXAlign namespace (active / hovered / selected)
+│   ├── state.js               window.__Caliper namespace (active / hovered / selected)
 │   ├── utils.js               formatters, color parsers, breadcrumb, getBox()
 │   ├── overlay.js             closed Shadow DOM, outlines, box-model, distance, insets
 │   ├── panel.js               side panel + click-to-copy + toast
@@ -143,7 +143,7 @@ ux-align/
     └── generate.py            stdlib-only PNG generator
 ```
 
-The whole UI renders inside a single `<style>` block injected into a closed Shadow DOM at activation time — so the page's CSS can never style our overlays and our overlays can never style the page. Cross-frame coordination uses the service worker as a relay: any frame's Esc sends `uxalign/global-deactivate` to the service worker, which broadcasts `uxalign/deactivate` to every frame in the tab.
+The whole UI renders inside a single `<style>` block injected into a closed Shadow DOM at activation time — so the page's CSS can never style our overlays and our overlays can never style the page. Cross-frame coordination uses the service worker as a relay: any frame's Esc sends `caliper/global-deactivate` to the service worker, which broadcasts `caliper/deactivate` to every frame in the tab.
 
 To regenerate icons:
 
@@ -177,11 +177,11 @@ When proposing UX changes, prefer iteration on `IDEA.md`'s decision log over rew
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE) — © 2026 UX Align contributors.
+[PolyForm Noncommercial 1.0.0](LICENSE) — © 2026 Caliper contributors.
 
-UX Align is **source-available for noncommercial use**. You may use it, modify it, and share it (including modified versions) for personal, educational, research, hobbyist, or any noncommercial purpose. Use by charities, schools, public-research institutions, and government agencies is also permitted.
+Caliper is **source-available for noncommercial use**. You may use it, modify it, and share it (including modified versions) for personal, educational, research, hobbyist, or any noncommercial purpose. Use by charities, schools, public-research institutions, and government agencies is also permitted.
 
-**Selling UX Align, or shipping it as part of a paid commercial product or service, is not permitted** under this license. If you'd like a commercial license, please open an issue.
+**Selling Caliper, or shipping it as part of a paid commercial product or service, is not permitted** under this license. If you'd like a commercial license, please open an issue.
 
 > Note on terminology: by the strict OSI definition, "open source" forbids field-of-use restrictions, so a noncommercial-only license is technically *source-available* rather than *open source*. The source code is fully public, modifiable and forkable for the permitted purposes — just not sellable.
 
@@ -189,6 +189,6 @@ UX Align is **source-available for noncommercial use**. You may use it, modify i
 
 ## Disclaimer
 
-UX Align is a UI inspection tool intended for design QA, debugging and educational use on pages you own or have explicit permission to inspect. The authors and contributors do not endorse and are not responsible for any modification, redistribution or use of this software outside of that intent — including, without limitation, automated scraping, surveillance, security-bypass tooling or unauthorised inspection of third-party systems.
+Caliper is a UI inspection tool intended for design QA, debugging and educational use on pages you own or have explicit permission to inspect. The authors and contributors do not endorse and are not responsible for any modification, redistribution or use of this software outside of that intent — including, without limitation, automated scraping, surveillance, security-bypass tooling or unauthorised inspection of third-party systems.
 
-The software is provided "AS IS" under the PolyForm Noncommercial License with no warranty of any kind, express or implied. By using UX Align you accept full responsibility for how you use it.
+The software is provided "AS IS" under the PolyForm Noncommercial License with no warranty of any kind, express or implied. By using Caliper you accept full responsibility for how you use it.

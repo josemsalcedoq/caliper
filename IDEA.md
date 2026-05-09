@@ -1,4 +1,4 @@
-# ux-align — Idea
+# caliper — Idea
 
 > Documento vivo. Aquí capturamos la idea, el problema, la inspiración y el alcance.
 
@@ -110,9 +110,9 @@ Funcionalidad mínima para considerar la herramienta utilizable:
 
 - [x] `manifest.content_scripts.all_frames: true` → el inspector vive en cada frame (top + cada iframe, incluyendo cross-origin con `<all_urls>`).
 - [x] Cada frame inspecciona de forma **independiente** (modelo "Option A"): hover, selección y distance funcionan localmente; cada frame tiene su propio shadow DOM, su propio panel y su propio estado.
-- [x] **Esc global**: cuando un frame se desactiva por Esc, manda `uxalign/global-deactivate` al service worker, que broadcastea `uxalign/deactivate` a todos los frames del tab. Los receptores son idempotentes y no re-emiten para evitar bucles.
+- [x] **Esc global**: cuando un frame se desactiva por Esc, manda `caliper/global-deactivate` al service worker, que broadcastea `caliper/deactivate` a todos los frames del tab. Los receptores son idempotentes y no re-emiten para evitar bucles.
 - [x] El popup consulta estado al **top frame específicamente** (`frameId: 0`) — sin esto, una respuesta de un iframe desincronizado podía mostrar estado incorrecto.
-- [x] El handler de `uxalign/toggle` recibido vía broadcast pasa `{broadcast: false}` al `deactivate()` para no disparar una segunda ola innecesaria.
+- [x] El handler de `caliper/toggle` recibido vía broadcast pasa `{broadcast: false}` al `deactivate()` para no disparar una segunda ola innecesaria.
 
 ### Trade-offs aceptados en v0.2
 - Distance entre frames distintos no se dibuja (cada frame solo conoce su propio sistema de coordenadas; cruzar el límite de un iframe sin postMessage entre orígenes diferentes era costo desproporcionado).

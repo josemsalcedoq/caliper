@@ -36,7 +36,7 @@ function setUI({ status }) {
       labelEl.textContent = 'Refresh page to enable';
       statusMsg.hidden = false;
       statusMsg.textContent =
-        'UX Align was loaded after this tab opened. Refresh the page to enable the inspector here.';
+        'Caliper was loaded after this tab opened. Refresh the page to enable the inspector here.';
       break;
     case 'unsupported':
       toggleBtn.classList.add('is-disabled');
@@ -61,7 +61,7 @@ async function refresh() {
     // when frames are out of sync.
     const resp = await chrome.tabs.sendMessage(
       tab.id,
-      { type: 'uxalign/query-state' },
+      { type: 'caliper/query-state' },
       { frameId: 0 }
     );
     setUI({ status: resp?.active ? 'on' : 'off' });
@@ -73,7 +73,7 @@ async function refresh() {
 async function loadShortcut() {
   try {
     const cmds = await chrome.commands.getAll();
-    const c = cmds.find((c) => c.name === 'toggle-uxalign');
+    const c = cmds.find((c) => c.name === 'toggle-caliper');
     kbdEl.textContent = c?.shortcut || '';
   } catch {
     kbdEl.textContent = '';
@@ -85,7 +85,7 @@ toggleBtn.addEventListener('click', async () => {
   const tab = await getActiveTab();
   if (!tab || !isInjectable(tab.url)) return;
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: 'uxalign/toggle' });
+    await chrome.tabs.sendMessage(tab.id, { type: 'caliper/toggle' });
   } catch {
     setUI({ status: 'needs-refresh' });
     return;
@@ -102,7 +102,7 @@ shortcutLink.addEventListener('click', (e) => {
 });
 
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg?.type === 'uxalign/state') {
+  if (msg?.type === 'caliper/state') {
     setUI({ status: msg.active ? 'on' : 'off' });
   }
 });

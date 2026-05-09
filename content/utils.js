@@ -1,5 +1,5 @@
 (function () {
-  const A = window.__UXAlign;
+  const A = window.__Caliper;
   const U = (A.utils = {});
 
   U.fmt = (n) => {

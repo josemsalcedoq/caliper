@@ -13,21 +13,21 @@ async function toggleActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !isInjectable(tab.url)) return;
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: 'uxalign/toggle' });
+    await chrome.tabs.sendMessage(tab.id, { type: 'caliper/toggle' });
   } catch (_) {
     /* content script not present yet — user can refresh the page */
   }
 }
 
 chrome.commands.onCommand.addListener((cmd) => {
-  if (cmd === 'toggle-uxalign') toggleActiveTab();
+  if (cmd === 'toggle-caliper') toggleActiveTab();
 });
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (!sender.tab?.id) return;
   const tabId = sender.tab.id;
 
-  if (msg?.type === 'uxalign/state') {
+  if (msg?.type === 'caliper/state') {
     if (msg.active) {
       chrome.action.setBadgeText({ tabId, text: BADGE_ON });
       chrome.action.setBadgeBackgroundColor({ tabId, color: BADGE_COLOR });
@@ -39,8 +39,8 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
   // Any frame requesting a global deactivate -> tell every frame in the tab
   // to deactivate. Receivers handle this idempotently and don't re-broadcast.
-  if (msg?.type === 'uxalign/global-deactivate') {
-    chrome.tabs.sendMessage(tabId, { type: 'uxalign/deactivate' }).catch(() => {});
+  if (msg?.type === 'caliper/global-deactivate') {
+    chrome.tabs.sendMessage(tabId, { type: 'caliper/deactivate' }).catch(() => {});
     return;
   }
 });

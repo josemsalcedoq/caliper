@@ -67,6 +67,14 @@
   `;
 
   function ensureRoot() {
+    // If a page (some aggressive SPAs do this) detaches our host element from
+    // the document, silently re-create it. Otherwise A.hostEl would still
+    // point to the orphan node and every render would no-op invisibly.
+    if (A.hostEl && !document.documentElement.contains(A.hostEl)) {
+      A.hostEl = null;
+      A.shadow = null;
+      A.layers = null;
+    }
     if (A.hostEl) return;
     const host = document.createElement('div');
     host.id = 'ux-align-root';
@@ -157,6 +165,7 @@
     ensureRoot();
     if (!el) return;
     const box = window.__UXAlign.utils.getBox(el);
+    if (box.w <= 0 || box.h <= 0) return;
     const layer = A.layers.box;
     layer.appendChild(makeOutline(box));
     const fmt = window.__UXAlign.utils.fmt;
@@ -169,6 +178,7 @@
     if (!el) return;
     const U = window.__UXAlign.utils;
     const box = U.getBox(el);
+    if (box.w <= 0 || box.h <= 0) return;
     const layer = A.layers.box;
 
     const { padding, margin } = box;
@@ -217,6 +227,7 @@
     const U = window.__UXAlign.utils;
     const a = U.getBox(fromEl);
     const b = U.getBox(toEl);
+    if (a.w <= 0 || a.h <= 0 || b.w <= 0 || b.h <= 0) return;
     const layer = A.layers.distance;
 
     // X axis

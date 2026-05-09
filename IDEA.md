@@ -1,0 +1,114 @@
+# ux-align — Idea
+
+> Documento vivo. Aquí capturamos la idea, el problema, la inspiración y el alcance.
+
+## Inspiración: el modo de inspección de Figma
+
+En Figma, al seleccionar un elemento (o hacer hover con `Alt/Option`), se obtiene de forma inmediata:
+
+- **Dimensiones del elemento**: `width` × `height` en px.
+- **Posición**: coordenadas `X`, `Y` respecto al frame o parent.
+- **Distancias entre elementos** (las "red lines"): spacing en px hacia los elementos vecinos al hacer hover con `Alt`.
+- **Tipografía**: `font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing`.
+- **Color / relleno**: hex / rgb, opacidad.
+- **Bordes y radios**: `stroke-width`, `border-radius`.
+- **Efectos**: sombras, blur, etc.
+
+Esto permite a un diseñador o desarrollador medir y verificar rápidamente cualquier propiedad visual sin abrir DevTools ni inspeccionar código.
+
+---
+
+## Idea
+
+Construir una herramienta que reproduzca la experiencia de inspección de Figma, pero sobre **UIs reales ya renderizadas** (la web/app que estamos construyendo). El usuario hace hover o clic sobre un elemento y obtiene de forma inmediata:
+
+- Tamaño (`width` × `height`)
+- Padding y margin (visualizados como overlays de color, igual que el box-model de Figma/DevTools)
+- Distancias hacia elementos vecinos al hacer hover con una tecla modificadora (estilo `Alt` en Figma)
+- Tipografía completa (`font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing`)
+- Color de fondo, color de texto, opacidad
+- Border, border-radius, sombras
+- (Opcional) Comparación contra un diseño de Figma para detectar desviaciones de _pixel perfect_
+
+Todo esto **sin abrir DevTools, sin buscar el nodo en el árbol del DOM, sin leer reglas CSS**.
+
+## Problema que resuelve
+
+Cuando se busca un resultado **pixel perfect** entre el diseño en Figma y la UI implementada, el flujo actual es tedioso:
+
+1. Abrir DevTools (`Cmd+Opt+I`).
+2. Activar el inspector de elementos.
+3. Hacer clic en el elemento.
+4. Buscar entre las reglas CSS aplicadas (a veces sobreescritas, a veces heredadas, a veces de un framework).
+5. Calcular mentalmente paddings, gaps y distancias.
+6. Volver a Figma para comparar valores uno por uno.
+
+Esto rompe el _flow_ del diseñador/desarrollador y vuelve la verificación visual costosa. La idea es colapsar todo eso en un **hover + clic**.
+
+## Usuarios objetivo
+
+- Desarrolladores frontend haciendo QA visual de su propia implementación contra un diseño.
+- Diseñadores UX/UI que quieren auditar la implementación final sin saber CSS.
+- QAs visuales / testers que necesitan reportar discrepancias de spacing/tipografía.
+
+## Form factor — decisión: extensión de navegador (MV3)
+
+**Decidido: empezamos con una extensión de Chrome (Manifest V3).** El `.dmg` queda como camino futuro, no descartado.
+
+### Por qué extensión y no `.dmg`
+
+1. **Datos reales, no estimados.** En el navegador `getComputedStyle()` + `getBoundingClientRect()` devuelven todas las propiedades exactas (padding, font, distancias, color). En una app nativa habría que ir por Accessibility APIs de macOS (no devuelven CSS) o por captura + análisis de imagen (frágil y nunca pixel-perfect de verdad).
+2. **Tiempo a MVP.** Una extensión con overlay + hover + medición es cuestión de días. Una app nativa con la misma utilidad es semanas.
+3. **El caso de uso principal es web.** Pixel-perfect contra Figma casi siempre es web o web app. Apps nativas son un nicho posterior.
+4. **No es callejón sin salida.** Si después se quiere `.dmg`, lo natural es una app de escritorio (Electron / Tauri) que embeba un navegador y reutilice el mismo content script vía CDP. El trabajo de la extensión se aprovecha entero.
+
+### Trade-offs aceptados
+- No funciona sobre apps nativas ni Electron empaquetado de terceros (aceptable para v0.1).
+- Limitaciones de MV3 en service workers (sin estado persistente, hay que usar `chrome.storage`).
+
+## Alcance / MVP — v0.1 (implementado)
+
+Funcionalidad mínima para considerar la herramienta utilizable:
+
+- [x] **Toggle** con atajo `Cmd+Shift+U` (Mac) / `Ctrl+Shift+U` (Win/Linux) e icono en la toolbar.
+- [x] **Hover sobre un elemento** → outline azul + pill `width × height` (estilo Figma).
+- [x] **Click sobre un elemento** → selección bloqueada + box-model (padding verde, margin naranja, convención DevTools).
+- [x] **Hover con `Alt` sobre un segundo elemento** → líneas rojas con la distancia en px hacia el seleccionado en ambos ejes — **feature estrella, igual que Figma**.
+- [x] **Panel lateral fijo** con propiedades agrupadas: Layout, Spacing, Typography, Fill, Border, Effects.
+- [x] **Copiar valor** con un clic en cualquier fila del panel + toast de confirmación.
+- [x] **Esc** → primero deselecciona, segundo Esc cierra el modo inspección.
+- [x] **Indicador en la toolbar** (badge `●` azul) cuando la herramienta está activa en la pestaña.
+
+### Fuera de alcance para v0.1
+- Comparación contra archivos de Figma (post-MVP).
+- Soporte multi-pestaña / persistencia de selección entre recargas.
+- Modo "regla libre" para medir entre dos puntos arbitrarios.
+- Firefox / Safari (Chrome MV3 primero, después se porta).
+
+## Stack técnico — v0.1 implementado
+
+- **Manifest V3** (Chrome).
+- **Vanilla JavaScript** sin build step. Razón: el usuario carga la carpeta directamente en `chrome://extensions` y funciona; sin `npm install` ni proceso de compilación.
+- **Closed Shadow DOM** anclado a `<html>` para todo el overlay y el panel — aislamiento total respecto al CSS de la página.
+- **Tipografía UI**: `Inter` (con fallback al system stack), monoespaciada `SF Mono` / `JetBrains Mono` para valores numéricos.
+- **Paleta**:
+  - Acento (selección, dimensiones): `#0D99FF` (Figma blue).
+  - Medición (distancias): `#FF4D4D`.
+  - Padding overlay: verde tenue (convención DevTools).
+  - Margin overlay: naranja tenue (convención DevTools).
+  - Surface del panel: `rgba(28,28,30,0.92)` con `backdrop-filter: blur(20px) saturate(180%)`.
+- **Iconos**: generados por un script Python que solo usa stdlib (`struct` + `zlib`), reproducible con `python3 icons/generate.py`.
+
+### Próximos pasos sugeridos (post-v0.1)
+- Soporte para Firefox (manifest V3 ya compatible mayormente).
+- Comparación contra archivos Figma (vía Figma API).
+- Modo "regla libre" para medir entre dos puntos arbitrarios.
+- Modo persistente: que la selección sobreviva navegaciones/recargas.
+- Empaquetado como app de escritorio (`.dmg` Tauri/Electron) que embeba la extensión vía CDP.
+
+## Notas y referencias
+
+- Figma — modo inspect / dev mode.
+- Chrome DevTools — panel "Computed" y overlay de box-model.
+- Herramientas similares conocidas: PerfectPixel, VisBug (Google), Pesticide (extensión CSS).
+  - Diferenciador propuesto: ninguna de estas reproduce la **interacción tipo Figma** completa (hover + alt para distancias, panel rico con tipografía/colores agrupado).

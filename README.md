@@ -8,6 +8,8 @@
 ![Firefox](https://img.shields.io/badge/firefox-121%2B-orange.svg)
 ![Safari](https://img.shields.io/badge/safari-16.4%2B-blue.svg)
 
+![Caliper showing a selected button outlined in blue with its dimension pill, a measured distance line of 78px to a sibling button, and the dark Caliper side panel listing layout, spacing, typography and fill properties](assets/hero.svg)
+
 Caliper is a cross-browser web extension that turns any page into a Figma-style inspect surface. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. Caliper collapses that loop into hover-and-click.
 
 Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who want a CSS inspector that thinks like a design tool, not a debugger.
@@ -94,6 +96,10 @@ Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar
 ---
 
 ## How to use
+
+<p align="left">
+  <img src="assets/popup.png" alt="Caliper toolbar popup with the activate inspector button and gesture legend (Hover, Click, Move, Esc)" width="340">
+</p>
 
 1. Click the Caliper icon in the toolbar, or press the keyboard shortcut.
 2. The page cursor switches to a crosshair and a blue dot appears on the toolbar badge.

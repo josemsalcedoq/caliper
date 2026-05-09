@@ -266,5 +266,68 @@
       layer.appendChild(makeRect('dcap', x - 3, yGap.y2 - 1, 7, 1));
       layer.appendChild(makePill(`${U.fmt(yGap.value)}`, x + 18, yGap.y1 + h / 2, 'measure'));
     }
+
+    // Inset distances. When neither axis has a positive gap, one element may
+    // be fully contained inside the other -- the common "what's the padding
+    // between this card and the button inside it?" case. Draw the four edge
+    // distances (top / right / bottom / left) from the inner box's edges to
+    // the outer box's edges, the same convention Figma uses.
+    if (!xGap && !yGap) {
+      let inner = null;
+      let outer = null;
+      if (contains(a, b)) {
+        outer = a;
+        inner = b;
+      } else if (contains(b, a)) {
+        outer = b;
+        inner = a;
+      }
+      if (inner && outer) drawInsetMeasures(layer, outer, inner, U);
+    }
   };
+
+  function contains(outer, inner) {
+    return (
+      inner.x >= outer.x &&
+      inner.y >= outer.y &&
+      inner.x + inner.w <= outer.x + outer.w &&
+      inner.y + inner.h <= outer.y + outer.h
+    );
+  }
+
+  function drawInsetMeasures(layer, outer, inner, U) {
+    const cx = inner.x + inner.w / 2;
+    const cy = inner.y + inner.h / 2;
+    const top = inner.y - outer.y;
+    const right = outer.x + outer.w - (inner.x + inner.w);
+    const bottom = outer.y + outer.h - (inner.y + inner.h);
+    const left = inner.x - outer.x;
+
+    if (top > 0) {
+      layer.appendChild(makeRect('dline', cx, outer.y, 1, top));
+      layer.appendChild(makeRect('dcap', cx - 3, outer.y, 7, 1));
+      layer.appendChild(makeRect('dcap', cx - 3, inner.y - 1, 7, 1));
+      layer.appendChild(makePill(`${U.fmt(top)}`, cx + 18, outer.y + top / 2, 'measure'));
+    }
+    if (right > 0) {
+      const x1 = inner.x + inner.w;
+      layer.appendChild(makeRect('dline', x1, cy, right, 1));
+      layer.appendChild(makeRect('dcap', x1, cy - 3, 1, 7));
+      layer.appendChild(makeRect('dcap', x1 + right - 1, cy - 3, 1, 7));
+      layer.appendChild(makePill(`${U.fmt(right)}`, x1 + right / 2, cy - 14, 'measure'));
+    }
+    if (bottom > 0) {
+      const y1 = inner.y + inner.h;
+      layer.appendChild(makeRect('dline', cx, y1, 1, bottom));
+      layer.appendChild(makeRect('dcap', cx - 3, y1, 7, 1));
+      layer.appendChild(makeRect('dcap', cx - 3, y1 + bottom - 1, 7, 1));
+      layer.appendChild(makePill(`${U.fmt(bottom)}`, cx + 18, y1 + bottom / 2, 'measure'));
+    }
+    if (left > 0) {
+      layer.appendChild(makeRect('dline', outer.x, cy, left, 1));
+      layer.appendChild(makeRect('dcap', outer.x, cy - 3, 1, 7));
+      layer.appendChild(makeRect('dcap', outer.x + left - 1, cy - 3, 1, 7));
+      layer.appendChild(makePill(`${U.fmt(left)}`, outer.x + left / 2, cy - 14, 'measure'));
+    }
+  }
 })();

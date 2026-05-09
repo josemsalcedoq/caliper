@@ -8,7 +8,7 @@
 ![Firefox](https://img.shields.io/badge/firefox-121%2B-orange.svg)
 ![Safari](https://img.shields.io/badge/safari-16.4%2B-blue.svg)
 
-![Caliper showing a selected button outlined in blue with its dimension pill, a measured distance line of 78px to a sibling button, and the dark Caliper side panel listing layout, spacing, typography and fill properties](assets/hero.svg)
+![Caliper running on google.com — the Google logo is selected with a blue outline and a 272 × 92 dimension pill, a red 192.5px distance line connects it to a hovered link below, and the dark Caliper panel on the top right shows the selection's layout properties](assets/inspector.png)
 
 Caliper is a cross-browser web extension that turns any page into a Figma-style inspect surface. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. Caliper collapses that loop into hover-and-click.
 

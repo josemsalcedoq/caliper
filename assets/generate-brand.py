@@ -168,20 +168,6 @@ def main() -> None:
     img.save(out, "PNG")
     print(f"wrote {out} ({out.stat().st_size} bytes)")
 
-    # Also render a square avatar suitable for a GitHub profile picture.
-    # 460x460 is GitHub's recommended profile avatar size.
-    avatar_size = 460
-    avatar = Image.new("RGBA", (avatar_size, avatar_size), BG)
-    adraw = ImageDraw.Draw(avatar)
-    # Brand mark sized to fill ~70% of the canvas, centered
-    am_size = int(avatar_size * 0.72)
-    am_x = (avatar_size - am_size) // 2
-    am_y = (avatar_size - am_size) // 2
-    draw_brand_mark(adraw, am_x, am_y, am_size)
-    avatar_out = Path(__file__).parent / "avatar.png"
-    avatar.save(avatar_out, "PNG")
-    print(f"wrote {avatar_out} ({avatar_out.stat().st_size} bytes)")
-
 
 if __name__ == "__main__":
     main()

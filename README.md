@@ -1,7 +1,3 @@
-<p align="left">
-  <img src="assets/logo.svg" alt="Caliper logo" width="64" height="64">
-</p>
-
 # Caliper — Figma-style web UI inspector
 
 > Hover any element to measure it. Click to inspect every CSS property in one panel. Move the cursor to see the distance between two elements drawn live in red — no DevTools, no guesswork.

@@ -310,6 +310,10 @@
     const layoutRows = [
       row('W', `${U.fmt(box.w)}px`),
       row('H', `${U.fmt(box.h)}px`),
+      // Viewport-relative position -- what designers compare against a Figma
+      // frame. box.x / box.y are document-relative; box.rect.* are viewport.
+      row('X', `${U.fmt(box.rect.left)}px`),
+      row('Y', `${U.fmt(box.rect.top)}px`),
       row('Display', cs.display),
     ];
     if (['flex', 'inline-flex', 'grid', 'inline-grid'].includes(cs.display)) {

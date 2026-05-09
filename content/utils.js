@@ -51,10 +51,17 @@
   };
 
   U.tagDescriptor = (el) => {
-    let s = el.tagName.toLowerCase();
-    if (el.id) s += '#' + el.id;
-    else if (el.classList.length) s += '.' + Array.from(el.classList).slice(0, 2).join('.');
-    return s;
+    const tag = el.tagName.toLowerCase();
+    if (el.id) return tag + '#' + el.id;
+    // Component frameworks (React, Vue, Svelte) tend to ship with hashed
+    // class names that aren't useful in a breadcrumb -- but data-testid is
+    // the stable, human-meaningful identifier teams already maintain.
+    const testId = el.getAttribute('data-testid');
+    if (testId) return `${tag}[data-testid="${testId}"]`;
+    if (el.classList.length) {
+      return tag + '.' + Array.from(el.classList).slice(0, 2).join('.');
+    }
+    return tag;
   };
 
   U.tagPath = (el) => {

@@ -120,6 +120,40 @@ Funcionalidad mínima para considerar la herramienta utilizable:
 - Drift en iframes lazy-loaded: los frames insertados después de activar arrancan con el inspector apagado. Workaround: toggle off/on para resincronizar. Solución completa requiere que el SW guarde estado por tab (post-v0.2).
 - Iframes pequeños recortan el panel (280px no cabe en un widget de 200×100). El caso real (inspeccionar contenido relevante) suele estar en frames grandes; aceptable.
 
+## v0.3 — distance siempre visible + cross-browser
+
+### UX: distance al hover sin Alt
+- [x] Quitada la guarda por `Alt`. Si hay un elemento seleccionado y el cursor pasa sobre **cualquier** otro elemento, las líneas rojas y los pills de medición aparecen automáticamente.
+- [x] El elemento sobre el que está el cursor también muestra su outline azul + dimension pill, así los dos extremos de la medida se leen de un vistazo.
+- [x] Refactor pequeño en `overlay.js`: las funciones `renderHover` / `renderSelection` / `renderDistance` ya no llaman `replaceChildren()` por dentro — son aditivas. `render()` en `main.js` es el único que limpia (vía `O.clear()`). Sin ese cambio, dibujar selección + hover en el mismo frame se auto-borraba.
+- [x] Eliminado código muerto: `S.altPressed`, los listeners `keyup` y `window.blur`. Menos superficie.
+
+#### Trade-off
+- Las líneas "viven": cualquier movimiento del cursor cambia el hover y redibuja. Throttled a un `requestAnimationFrame` así que perf se mantiene plana, pero visualmente es más activo que con Alt. Es exactamente lo que pidió el usuario.
+
+### Cross-browser: Chrome + Firefox + Safari
+
+Una sola carpeta de fuente carga en los tres navegadores.
+
+- [x] **Código compatible sin polyfill.** El namespace `chrome.*` funciona como alias en Firefox 121+ y Safari 16.4+. Las APIs basadas en Promises que usamos (`await chrome.tabs.query()` etc.) están disponibles en los tres en versiones modernas. Cero `try/catch` para detección de runtime.
+- [x] **CSS ya cross-browser.** Tenemos tanto `backdrop-filter` como `-webkit-backdrop-filter`; tanto `::-webkit-scrollbar` como `scrollbar-width`. `gap` en flex está cubierto en todos los targets (Safari 14.1+).
+- [x] **Manifest tweak**: agregado `browser_specific_settings.gecko.id` y `strict_min_version: 121.0` para Firefox. No requiere build step.
+
+#### Cómo se carga en cada uno
+- **Chrome / Edge / Brave**: `chrome://extensions/` → Load unpacked.
+- **Firefox 121+**: `about:debugging` → Load Temporary Add-on.
+- **Safari 16.4+**: `xcrun safari-web-extension-converter <folder>` → genera proyecto Xcode → build + Develop menu → Allow Unsigned Extensions.
+
+#### Limitaciones aceptadas
+- **Safari ignora shortcuts del manifest.** Apple no respeta `commands.suggested_key` de forma confiable; el usuario asigna shortcut a mano en System Settings o usa el icono de la toolbar.
+- **Safari requiere Xcode.** Es la regla de Apple, no nuestra; no hay "load unpacked" ahí.
+- **Firefox <121** queda fuera. Soportarlo requeriría `background.scripts` adicional, que en Chrome dispara warning. La complejidad no compensa: FF 121 salió en diciembre 2023.
+
+### Lo que NO se hizo en v0.3 (a propósito)
+- No agregué Webextension-polyfill. El uso de `chrome.*` con Promises es suficiente para los tres navegadores en versiones modernas.
+- No agregué un build step para producir manifests por navegador. El manifest único cubre los tres.
+- No probé Safari empíricamente (requiere Xcode). El manifest es estándar; si algo no encaja, se itera.
+
 ## Notas y referencias
 
 - Figma — modo inspect / dev mode.

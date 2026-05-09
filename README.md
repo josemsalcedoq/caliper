@@ -20,23 +20,50 @@ A Chrome extension that turns the page into a Figma-like inspect surface: hover 
 
 Everything is rendered in a closed Shadow DOM, so the page's CSS can never leak into the inspector and vice versa.
 
-## Install (developer mode)
+## Install
 
-1. Open `chrome://extensions/` in Chrome.
+The same source folder loads into Chrome, Edge, Firefox and Safari. Pick your browser:
+
+### Chrome / Edge / Brave (developer mode)
+
+1. Open `chrome://extensions/` (or `edge://extensions/`).
 2. Enable **Developer mode** (top-right toggle).
-3. Click **Load unpacked**.
-4. Select this folder (`ux-align/`).
-5. The UX Align icon appears in the toolbar.
+3. Click **Load unpacked** and select this folder.
+4. Refresh any tabs you had open before installing.
 
-> If you had a tab open before installing, **refresh the tab** so the content script gets injected.
+Customize the keyboard shortcut at `chrome://extensions/shortcuts`.
+
+### Firefox 121+ (temporary add-on)
+
+Firefox 121 is the minimum because earlier MV3 builds didn't support the `service_worker` background.
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…**.
+3. Pick any file inside this folder (e.g. `manifest.json`).
+4. The add-on stays loaded until you restart Firefox.
+
+Customize the keyboard shortcut at `about:addons` → ⚙ → **Manage Extension Shortcuts**.
+
+### Safari 16.4+ (Xcode wrapper)
+
+Apple requires every Safari extension to ship inside a host app, so there's no "load unpacked" — but the conversion is automatic:
+
+1. From Terminal:
+   ```
+   xcrun safari-web-extension-converter /path/to/ux-align
+   ```
+2. Xcode opens with a generated wrapper project. Build & run it (⌘R) once.
+3. Safari → Settings → **Extensions** → enable **UX Align**.
+4. Safari → Develop menu → enable **Allow Unsigned Extensions** (resets on every Safari restart unless you sign with an Apple Developer ID).
+
+Caveat: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar icon, or assign a shortcut in System Settings → Keyboard → Keyboard Shortcuts → App Shortcuts → Safari.
 
 ## Use it
 
 - **Toolbar icon** → opens the popup with status and a big "Activate inspector" button.
-- **Keyboard shortcut**:
+- **Default keyboard shortcut**:
   - macOS: `⌘ + Shift + U`
   - Windows / Linux: `Ctrl + Shift + U`
-  - Customize at `chrome://extensions/shortcuts`.
 
 When active, a blue dot (`●`) appears on the extension badge and the page cursor switches to a crosshair.
 
@@ -83,7 +110,7 @@ Iframes that lazy-load *after* you activate the inspector will start with the in
 - Sandboxed iframes that disallow scripts (`<iframe sandbox>` without `allow-scripts`) can't be inspected — Chrome doesn't inject content scripts there.
 - No persistence of selection across reloads.
 - No comparison against a Figma file (planned for a later version).
-- Chrome only. Firefox / Safari ports come after the model stabilizes.
+- Safari ignores manifest-declared keyboard shortcuts; assign one in System Settings if you want one.
 
 ## License
 

@@ -2,10 +2,16 @@
   "manifest_version": 3,
   "name": "UX Align",
   "short_name": "UX Align",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Inspect any web UI like Figma — measure, align, and verify pixel-perfect implementations without opening DevTools.",
   "permissions": ["activeTab"],
   "host_permissions": ["<all_urls>"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ux-align@uxalign.dev",
+      "strict_min_version": "121.0"
+    }
+  },
   "action": {
     "default_title": "UX Align — toggle inspector",
     "default_popup": "popup/popup.html",

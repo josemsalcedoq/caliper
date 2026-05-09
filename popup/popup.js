@@ -56,7 +56,14 @@ async function refresh() {
     return;
   }
   try {
-    const resp = await chrome.tabs.sendMessage(tab.id, { type: 'uxalign/query-state' });
+    // Query the top frame specifically (frameId: 0). Without it the message
+    // hits every frame in the tab and the response winner is non-deterministic
+    // when frames are out of sync.
+    const resp = await chrome.tabs.sendMessage(
+      tab.id,
+      { type: 'uxalign/query-state' },
+      { frameId: 0 }
+    );
     setUI({ status: resp?.active ? 'on' : 'off' });
   } catch {
     setUI({ status: 'needs-refresh' });

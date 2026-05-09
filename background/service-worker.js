@@ -24,13 +24,24 @@ chrome.commands.onCommand.addListener((cmd) => {
 });
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
-  if (msg?.type !== 'uxalign/state' || !sender.tab?.id) return;
+  if (!sender.tab?.id) return;
   const tabId = sender.tab.id;
-  if (msg.active) {
-    chrome.action.setBadgeText({ tabId, text: BADGE_ON });
-    chrome.action.setBadgeBackgroundColor({ tabId, color: BADGE_COLOR });
-  } else {
-    chrome.action.setBadgeText({ tabId, text: '' });
+
+  if (msg?.type === 'uxalign/state') {
+    if (msg.active) {
+      chrome.action.setBadgeText({ tabId, text: BADGE_ON });
+      chrome.action.setBadgeBackgroundColor({ tabId, color: BADGE_COLOR });
+    } else {
+      chrome.action.setBadgeText({ tabId, text: '' });
+    }
+    return;
+  }
+
+  // Any frame requesting a global deactivate -> tell every frame in the tab
+  // to deactivate. Receivers handle this idempotently and don't re-broadcast.
+  if (msg?.type === 'uxalign/global-deactivate') {
+    chrome.tabs.sendMessage(tabId, { type: 'uxalign/deactivate' }).catch(() => {});
+    return;
   }
 });
 

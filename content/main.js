@@ -21,7 +21,7 @@
     notify(true);
   }
 
-  function deactivate() {
+  function deactivate(opts = {}) {
     if (!S.active) return;
     S.active = false;
     S.hovered = null;
@@ -32,6 +32,14 @@
     A.overlay.tearDown();
     removeCursorStyle();
     notify(false);
+    // When deactivation originates locally (Esc / popup toggle while active),
+    // ask the service worker to broadcast to every frame in the tab so they
+    // turn off in lockstep. Receivers pass {broadcast: false} to avoid loops.
+    if (opts.broadcast !== false) {
+      try {
+        chrome.runtime.sendMessage({ type: 'uxalign/global-deactivate' });
+      } catch (_) {}
+    }
   }
 
   function attachListeners() {
@@ -207,7 +215,10 @@
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === 'uxalign/toggle') {
-      if (S.active) deactivate();
+      // The toggle is broadcast by the SW/popup to every frame in the tab,
+      // so each frame already learns about the state change directly. Skip
+      // the global re-broadcast on deactivate to avoid a duplicate wave.
+      if (S.active) deactivate({ broadcast: false });
       else activate();
       sendResponse({ active: S.active });
       return;
@@ -217,7 +228,7 @@
       return;
     }
     if (msg?.type === 'uxalign/deactivate') {
-      deactivate();
+      deactivate({ broadcast: false });
       sendResponse({ active: false });
       return;
     }

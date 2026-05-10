@@ -211,6 +211,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ active: !!state, ...(state || {}) });
     return;
   }
+
+  // Pull-side counterpart of the push via tabs.onUpdated. Content scripts
+  // ask for current state on load; this closes the race when the push
+  // fires before the receiver's onMessage listener exists.
+  if (msg?.type === 'caliper/responsive-self-state' && tabId) {
+    const state = debugTabs.get(tabId);
+    if (!state || !state.originalOuterW || state.originalOuterW <= state.width) {
+      sendResponse({ active: false });
+      return;
+    }
+    const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
+    sendResponse({ active: true, offsetX });
+    return;
+  }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {

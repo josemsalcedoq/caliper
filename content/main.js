@@ -100,16 +100,23 @@
     // and we suppress hover updates -- the user is committed to measuring
     // a region, not pointing at an element.
     if (S.dragStart) {
-      const cx = e.clientX + window.scrollX;
-      const cy = e.clientY + window.scrollY;
-      const moved = Math.hypot(cx - S.dragStart.x, cy - S.dragStart.y);
+      // Threshold check is in *client* coords so that a wheel-scroll while
+      // the mouse is held down (cursor stationary on screen, document
+      // moving underneath) does not look like cursor movement and
+      // mis-fire a ruler. The ruler endpoint itself stays in document
+      // coords so the line stays anchored to the page when the user
+      // scrolls afterwards.
+      const moved = Math.hypot(
+        e.clientX - S.dragStart.cx,
+        e.clientY - S.dragStart.cy,
+      );
       if (moved > DRAG_THRESHOLD) {
         S.dragging = true;
         S.ruler = {
           x1: S.dragStart.x,
           y1: S.dragStart.y,
-          x2: cx,
-          y2: cy,
+          x2: e.clientX + window.scrollX,
+          y2: e.clientY + window.scrollY,
         };
         scheduleRender();
         return;
@@ -154,9 +161,18 @@
     e.preventDefault();
     e.stopPropagation();
     if (e.button !== 0) return;
+    // Track the gesture in two coordinate spaces. Document coords (x,y)
+    // anchor the ruler to the page so it stays put when the user later
+    // scrolls. Client coords (cx,cy) feed the drag-threshold check, so
+    // scrolling while the mouse is held down does NOT look like cursor
+    // movement -- previously the threshold compared in doc coords and the
+    // wheel-scroll component leaked into the gesture, mis-firing a ruler
+    // on what the user intended as a click after a quick scroll.
     S.dragStart = {
       x: e.clientX + window.scrollX,
       y: e.clientY + window.scrollY,
+      cx: e.clientX,
+      cy: e.clientY,
     };
     S.dragging = false;
   }
@@ -315,6 +331,26 @@
       return;
     }
   });
+
+  // Proactively pull responsive state from the SW on every content-script
+  // load. The SW's push via tabs.onUpdated runs into a real race after
+  // page navigation: 'status: complete' can fire before this listener has
+  // been registered, the sendMessage rejects, the .catch() swallows it
+  // silently, and the frame never lands. A pull on init closes that
+  // window. Same path also covers the post-extension-reload case where
+  // the SW restored its state from session storage but the page DOM has
+  // no <style> tag yet.
+  (async function syncResponsiveOnLoad() {
+    if (window.top !== window.self) return;
+    try {
+      const state = await chrome.runtime.sendMessage({
+        type: 'caliper/responsive-self-state',
+      });
+      if (state?.active && state.offsetX) {
+        applyResponsiveFrame(state.offsetX);
+      }
+    } catch (_) {}
+  })();
 
   function applyResponsiveFrame(offsetX) {
     // Only the top frame centres the page. Iframes have their own content

@@ -262,11 +262,15 @@
     if (!S.active) return;
     A.overlay.clear();
     if (S.selected) {
-      A.overlay.renderSelection(S.selected);
-      // Hover overlay + auto-distance suppressed during drag: the user has
-      // committed to measuring a free region, not pointing at elements.
-      if (!S.dragging && S.hovered && S.hovered !== S.selected) {
-        A.overlay.renderHover(S.hovered);
+      // When the distance overlay is active we hide both elements'
+      // dimension pills. With short distances (~30-50px gaps) the dim
+      // pills land at almost the same Y as the distance pill and stack
+      // unreadably; the distance value is the relevant info in that
+      // moment, and per-element dimensions are already in the side panel.
+      const showingDistance = !S.dragging && S.hovered && S.hovered !== S.selected;
+      A.overlay.renderSelection(S.selected, { skipPill: showingDistance });
+      if (showingDistance) {
+        A.overlay.renderHover(S.hovered, { skipPill: true });
         A.overlay.renderDistance(S.selected, S.hovered);
       }
       A.panel.show(S.selected);
@@ -409,6 +413,14 @@
         transform: translateX(${offsetX}px) !important;
         transform-origin: top left !important;
         transition: transform 140ms ease !important;
+        /* Visible viewport boundary. Outline (not border) so it doesn't
+           shift the layout by 2 px and decentre the page. outline-offset
+           keeps it on the inner edge so the body's actual width is what
+           you see. The drop shadow lifts it off the canvas so designers
+           recognise the rectangle as 'the responsive viewport'. */
+        outline: 1px solid rgba(13, 153, 255, 0.45) !important;
+        outline-offset: -1px !important;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1) !important;
       }
     `;
   }

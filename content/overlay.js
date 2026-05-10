@@ -171,19 +171,21 @@
   // composes by calling whichever combination of renderHover / renderSelection
   // / renderDistance is appropriate for the current state.
 
-  O.renderHover = function (el) {
+  O.renderHover = function (el, opts = {}) {
     ensureRoot();
     if (!el) return;
     const box = window.__Caliper.utils.getBox(el);
     if (box.w <= 0 || box.h <= 0) return;
     const layer = A.layers.box;
     layer.appendChild(makeOutline(box));
-    const fmt = window.__Caliper.utils.fmt;
-    const text = `${fmt(box.w)} × ${fmt(box.h)}px`;
-    layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
+    if (!opts.skipPill) {
+      const fmt = window.__Caliper.utils.fmt;
+      const text = `${fmt(box.w)} × ${fmt(box.h)}px`;
+      layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
+    }
   };
 
-  O.renderSelection = function (el) {
+  O.renderSelection = function (el, opts = {}) {
     ensureRoot();
     if (!el) return;
     const U = window.__Caliper.utils;
@@ -227,8 +229,10 @@
       );
 
     layer.appendChild(makeOutline(box));
-    const text = `${U.fmt(box.w)} × ${U.fmt(box.h)}px`;
-    layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
+    if (!opts.skipPill) {
+      const text = `${U.fmt(box.w)} × ${U.fmt(box.h)}px`;
+      layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
+    }
   };
 
   O.renderDistance = function (fromEl, toEl) {

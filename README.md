@@ -27,6 +27,7 @@ Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who
   - **Border** — width, style, color, radius.
   - **Effects** — box-shadow, opacity.
 - **Move the cursor over another element** — distance between the selection and the hover is drawn in red on every axis. **No modifier key required.** Works for side-by-side gaps and for nested cases (the four padding-style insets between an outer and an inner element).
+- **Drag anywhere** — free ruler between two arbitrary points, with live `dx` and `dy` pills. Same idea as Figma's Alt-drag, but no modifier key. The ruler stays drawn after release so you can read or screenshot the values; clear with `Esc` or by clicking on an element.
 - **Click any panel row** — copies the value to the clipboard, with a "Copied" toast.
 - **Smart breadcrumb** — picks `id`, then `data-testid`, then the first two CSS classes. Reads `button[data-testid="submit"]` instead of `button.bg-blue-500.text-white` in component-based codebases.
 - **Works inside iframes** — content scripts run in every frame in the tab (top + same-origin + cross-origin), so embedded widgets are inspectable too.
@@ -106,6 +107,7 @@ Note: Safari often ignores manifest-declared keyboard shortcuts. Use the toolbar
 3. **Hover** anything to see its size.
 4. **Click** to lock it as the selection. The side panel opens at the top-right with every property grouped.
 5. **Move the cursor** to another element — distance lines and value pills are drawn between the selection and whatever is under your cursor.
+6. **Or click-and-drag in any empty area** — a free ruler appears between the two points, with `dx` and `dy` shown live.
 6. **Click a row** in the panel to copy the value.
 7. **Esc** to deselect; **Esc** again to exit the inspector.
 

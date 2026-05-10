@@ -2,6 +2,11 @@
   const A = window.__Caliper;
   const S = A.state;
 
+  // Pixels of cursor movement between mousedown and mouseup that flip the
+  // gesture from "click" (-> select element) to "drag" (-> draw free ruler).
+  // 4px filters hand jitter while still feeling instantly responsive.
+  const DRAG_THRESHOLD = 4;
+
   let renderQueued = false;
   let cursorStyleEl = null;
   let listenersAttached = false;
@@ -26,6 +31,9 @@
     S.active = false;
     S.hovered = null;
     S.selected = null;
+    S.ruler = null;
+    S.dragStart = null;
+    S.dragging = false;
     detachListeners();
     A.panel.hide();
     A.overlay.tearDown();
@@ -88,40 +96,56 @@
 
   function onMouseMove(e) {
     if (!S.active) return;
+    // While a drag is in flight, every mousemove updates the ruler endpoint
+    // and we suppress hover updates -- the user is committed to measuring
+    // a region, not pointing at an element.
+    if (S.dragStart) {
+      const cx = e.clientX + window.scrollX;
+      const cy = e.clientY + window.scrollY;
+      const moved = Math.hypot(cx - S.dragStart.x, cy - S.dragStart.y);
+      if (moved > DRAG_THRESHOLD) {
+        S.dragging = true;
+        S.ruler = {
+          x1: S.dragStart.x,
+          y1: S.dragStart.y,
+          x2: cx,
+          y2: cy,
+        };
+        scheduleRender();
+        return;
+      }
+    }
     const target = A.utils.elementAt(e.clientX, e.clientY);
     if (!target || target === S.hovered) return;
     S.hovered = target;
     scheduleRender();
   }
 
-  // Cursor left the document (URL bar, devtools, another tab). Drop the
-  // hover so we don't leave a stale outline drawn until the user comes
-  // back. The selection is kept -- only the transient hover is cleared.
+  // Cursor left the document (URL bar, another tab, into a child iframe).
+  // Drop the transient hover. Cancel any drag in flight too -- the matching
+  // mouseup may never reach us, leaving the gesture stuck. The already-drawn
+  // ruler stays so the user can still read the last measurement.
   function onMouseLeave(e) {
     if (!S.active) return;
     if (e.target !== document.documentElement && e.target !== document) return;
-    if (S.hovered) {
-      S.hovered = null;
-      scheduleRender();
+    if (S.hovered) S.hovered = null;
+    if (S.dragStart) {
+      S.dragStart = null;
+      S.dragging = false;
     }
+    scheduleRender();
   }
 
   function onClick(e) {
     if (!S.active) return;
     if (A.utils.isOurEl(e.target)) return;
+    // Selection is decided in mouseup (where we know whether the gesture
+    // was a click or a drag). The click event still fires after a click,
+    // so we just preventDefault here to suppress link navigation, form
+    // submission and other native click behaviour while inspecting.
     e.preventDefault();
     e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-    if (e.button !== undefined && e.button !== 0) return;
-    const target = A.utils.elementAt(e.clientX, e.clientY);
-    if (!target) return;
-    if (S.selected === target) {
-      S.selected = null;
-      A.panel.hide();
-    } else {
-      S.selected = target;
-    }
-    scheduleRender();
   }
 
   function onMouseDown(e) {
@@ -129,13 +153,48 @@
     if (A.utils.isOurEl(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
+    if (e.button !== 0) return;
+    S.dragStart = {
+      x: e.clientX + window.scrollX,
+      y: e.clientY + window.scrollY,
+    };
+    S.dragging = false;
   }
 
   function onMouseUp(e) {
     if (!S.active) return;
-    if (A.utils.isOurEl(e.target)) return;
+    if (A.utils.isOurEl(e.target)) {
+      S.dragStart = null;
+      S.dragging = false;
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
+
+    const wasDrag = S.dragging;
+    const hadDragStart = !!S.dragStart;
+    S.dragStart = null;
+    S.dragging = false;
+
+    if (wasDrag) {
+      // Ruler is drawn from the last mousemove. Leave it on screen so the
+      // user can read the value, screenshot it, etc. Cleared by Esc, by
+      // clicking on an element, or by starting another drag.
+      return;
+    }
+    if (!hadDragStart || (e.button !== undefined && e.button !== 0)) return;
+
+    // Click resolved: pick an element. Clicking always clears any ruler.
+    const target = A.utils.elementAt(e.clientX, e.clientY);
+    if (!target) return;
+    S.ruler = null;
+    if (S.selected === target) {
+      S.selected = null;
+      A.panel.hide();
+    } else {
+      S.selected = target;
+    }
+    scheduleRender();
   }
 
   function onContextMenu(e) {
@@ -149,7 +208,12 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
-      if (S.selected) {
+      // Three-step Esc cycle so each press has an obvious effect:
+      // ruler -> selection -> off.
+      if (S.ruler) {
+        S.ruler = null;
+        scheduleRender();
+      } else if (S.selected) {
         S.selected = null;
         A.panel.hide();
         scheduleRender();
@@ -181,17 +245,18 @@
     A.overlay.clear();
     if (S.selected) {
       A.overlay.renderSelection(S.selected);
-      // Distance is now always shown when the cursor is over a different
-      // element than the selection -- no Alt modifier required. The hovered
-      // element gets its own outline + dimension pill so the user can see
-      // the two endpoints of the measurement at a glance.
-      if (S.hovered && S.hovered !== S.selected) {
+      // Hover overlay + auto-distance suppressed during drag: the user has
+      // committed to measuring a free region, not pointing at elements.
+      if (!S.dragging && S.hovered && S.hovered !== S.selected) {
         A.overlay.renderHover(S.hovered);
         A.overlay.renderDistance(S.selected, S.hovered);
       }
       A.panel.show(S.selected);
-    } else if (S.hovered) {
+    } else if (!S.dragging && S.hovered) {
       A.overlay.renderHover(S.hovered);
+    }
+    if (S.ruler) {
+      A.overlay.renderRuler(S.ruler);
     }
   }
 

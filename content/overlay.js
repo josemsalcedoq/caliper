@@ -64,6 +64,16 @@
       background: #FF4D4D;
       pointer-events: none;
     }
+    .rdot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #FF4D4D;
+      pointer-events: none;
+      box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95);
+      transform: translate(-50%, -50%);
+    }
   `;
 
   function ensureRoot() {
@@ -285,6 +295,53 @@
       if (inner && outer) drawInsetMeasures(layer, outer, inner, U);
     }
   };
+
+  // Free ruler -- a measurement between two arbitrary document-space points
+  // (not bound to any element). Rendered as Figma's L-shape: a horizontal
+  // segment at y1 and a vertical segment at x2, each with end caps and a
+  // value pill, plus two endpoint dots so the start and end read clearly.
+  // Pill placement avoids overlapping the perpendicular segment by flipping
+  // sides depending on drag direction.
+  O.renderRuler = function (ruler) {
+    ensureRoot();
+    if (!ruler) return;
+    const U = window.__Caliper.utils;
+    const layer = A.layers.distance;
+
+    const { x1, y1, x2, y2 } = ruler;
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+
+    if (dx >= 1) {
+      layer.appendChild(makeRect('dline', minX, y1, dx, 1));
+      layer.appendChild(makeRect('dcap', minX, y1 - 3, 1, 7));
+      layer.appendChild(makeRect('dcap', maxX - 1, y1 - 3, 1, 7));
+      const pillY = y2 > y1 ? y1 - 14 : y1 + 14;
+      layer.appendChild(makePill(`${U.fmt(dx)}`, minX + dx / 2, pillY, 'measure'));
+    }
+    if (dy >= 1) {
+      layer.appendChild(makeRect('dline', x2, minY, 1, dy));
+      layer.appendChild(makeRect('dcap', x2 - 3, minY, 7, 1));
+      layer.appendChild(makeRect('dcap', x2 - 3, maxY - 1, 7, 1));
+      const pillX = x2 > x1 ? x2 + 18 : x2 - 18;
+      layer.appendChild(makePill(`${U.fmt(dy)}`, pillX, minY + dy / 2, 'measure'));
+    }
+
+    drawDot(layer, x1, y1);
+    drawDot(layer, x2, y2);
+  };
+
+  function drawDot(layer, x, y) {
+    const dot = document.createElement('div');
+    dot.className = 'rdot';
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+    layer.appendChild(dot);
+  }
 
   function contains(outer, inner) {
     return (

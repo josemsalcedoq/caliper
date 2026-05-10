@@ -200,3 +200,9 @@ Caliper is **source-available for noncommercial use**. You may use it, modify it
 Caliper is a UI inspection tool intended for design QA, debugging and educational use on pages you own or have explicit permission to inspect. The authors and contributors do not endorse and are not responsible for any modification, redistribution or use of this software outside of that intent — including, without limitation, automated scraping, surveillance, security-bypass tooling or unauthorised inspection of third-party systems.
 
 The software is provided "AS IS" under the PolyForm Noncommercial License with no warranty of any kind, express or implied. By using Caliper you accept full responsibility for how you use it.
+
+### Not affiliated with Figma or any other third party
+
+Caliper is an independent open-source project. It is **not affiliated with, endorsed by, sponsored by, or in any way officially connected to Figma, Inc.** or any of its subsidiaries or affiliates. Figma references throughout this documentation describe the inspection workflow that Caliper aims to reproduce, used for nominative comparison only. "Figma" and the Figma logo are trademarks of Figma, Inc.
+
+The same applies to other third-party tools and brands mentioned (Chrome, Edge, Firefox, Safari, Tailwind, PerfectPixel, VisBug, etc.) — these are referenced descriptively for compatibility and comparison, not as endorsements or partnerships.

@@ -28,20 +28,37 @@ async function restoreDebugTabs() {
     }
   } catch (_) {}
 }
-restoreDebugTabs();
+// Capture the restoration promise so message handlers can await it before
+// reading debugTabs. Without this, a popup query that wakes the service
+// worker can race with the storage.session.get I/O and read an empty
+// Map, falsely reporting responsive mode as inactive.
+const ready = restoreDebugTabs();
 
 async function setResponsive(tabId, opts) {
+  await ready;
   const target = { tabId };
-  const width = opts.width | 0;
-  const height = opts.height | 0;
+  // Defensive clamp: the popup already clamps but a future caller might
+  // not, and CDP at extreme values renders unusably wide pages.
+  const width = Math.min(Math.max(50, opts.width | 0), 4000);
+  const height = Math.min(Math.max(50, opts.height | 0), 4000);
   const dpr = opts.dpr || 1;
   const mobile = !!opts.mobile;
 
   // Capture the original window outer width on first apply -- after the
   // override is in effect we can't reliably read the real browser-window
   // width from the page, so we keep it cached for subsequent preset changes.
+  // Fall back to chrome.windows.get when the popup couldn't supply it
+  // (typically because the content script isn't loaded yet) so the centre
+  // calculation still works.
   const existing = debugTabs.get(tabId);
-  const originalOuterW = existing?.originalOuterW || opts.outerW || 0;
+  let originalOuterW = existing?.originalOuterW || opts.outerW || 0;
+  if (!originalOuterW) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      const win = await chrome.windows.get(tab.windowId);
+      originalOuterW = win.width || 0;
+    } catch (_) {}
+  }
 
   if (!debugTabs.has(tabId)) {
     try {
@@ -73,6 +90,7 @@ async function setResponsive(tabId, opts) {
 }
 
 async function clearResponsive(tabId) {
+  await ready;
   if (!debugTabs.has(tabId)) return;
   const target = { tabId };
   try {
@@ -207,23 +225,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg?.type === 'caliper/responsive-status' && tabId) {
-    const state = debugTabs.get(tabId);
-    sendResponse({ active: !!state, ...(state || {}) });
-    return;
+    ready.then(() => {
+      const state = debugTabs.get(tabId);
+      sendResponse({ active: !!state, ...(state || {}) });
+    });
+    return true; // keep the port open for async response
   }
 
   // Pull-side counterpart of the push via tabs.onUpdated. Content scripts
   // ask for current state on load; this closes the race when the push
   // fires before the receiver's onMessage listener exists.
   if (msg?.type === 'caliper/responsive-self-state' && tabId) {
-    const state = debugTabs.get(tabId);
-    if (!state || !state.originalOuterW || state.originalOuterW <= state.width) {
-      sendResponse({ active: false });
-      return;
-    }
-    const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
-    sendResponse({ active: true, offsetX });
-    return;
+    ready.then(() => {
+      const state = debugTabs.get(tabId);
+      if (!state || !state.originalOuterW || state.originalOuterW <= state.width) {
+        sendResponse({ active: false });
+        return;
+      }
+      const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
+      sendResponse({ active: true, offsetX });
+    });
+    return true;
   }
 });
 

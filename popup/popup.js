@@ -155,11 +155,16 @@ async function setResponsive(targetW, targetH, mobile) {
   const tab = await getActiveTab();
   if (!tab || !isInjectable(tab.url)) return;
   const info = await getViewportInfo();
+  // Clamp inputs into a sane range. Without this, a stray '100000' typed
+  // in the custom W field reaches CDP intact and renders the page
+  // 100,000 pixels wide, breaking layout entirely.
+  const w = Math.min(Math.max(50, targetW | 0), 4000);
+  const h = Math.min(Math.max(50, targetH | 0), 4000);
   const r = await chrome.runtime.sendMessage({
     type: 'caliper/responsive-set',
     tabId: tab.id,
-    width: Math.max(50, targetW | 0),
-    height: Math.max(50, targetH | 0),
+    width: w,
+    height: h,
     mobile: !!mobile,
     dpr: currentDpr,
     outerW: info?.outerW || 0,
@@ -211,6 +216,10 @@ async function refreshResponsiveState() {
     syncDprButtons();
     return;
   }
+  // Reset DPR when responsive is off so the previously-selected button
+  // does not stay highlighted and silently apply a stale value to the
+  // next setResponsive call.
+  currentDpr = 1;
   const info = await getViewportInfo();
   if (info) {
     currentSizeEl.textContent = `Currently ${info.innerW} × ${info.innerH}`;

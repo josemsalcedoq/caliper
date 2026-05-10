@@ -46,6 +46,11 @@ function setUI({ status }) {
       statusMsg.textContent =
         'Chrome blocks extensions on internal pages (chrome://, extension store, etc.). Try it on any normal website.';
       break;
+    default:
+      // Defensive: unexpected status leaves the label honest about the
+      // unknown state instead of stale from the previous render.
+      labelEl.textContent = '—';
+      break;
   }
 }
 

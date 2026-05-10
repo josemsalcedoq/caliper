@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "Caliper",
   "short_name": "Caliper",
-  "version": "0.10.5",
+  "version": "0.10.6",
   "description": "Inspect any web UI like Figma — measure, align, and verify pixel-perfect implementations without opening DevTools.",
+  "minimum_chrome_version": "102",
   "permissions": ["activeTab", "debugger", "storage"],
   "host_permissions": ["<all_urls>"],
   "browser_specific_settings": {

@@ -34,7 +34,7 @@ async function restoreDebugTabs() {
 // Map, falsely reporting responsive mode as inactive.
 const ready = restoreDebugTabs();
 
-async function setResponsive(tabId, opts) {
+async function setResponsive(tabId, opts, _retried = false) {
   await ready;
   const target = { tabId };
   // Defensive clamp: the popup already clamps but a future caller might
@@ -83,10 +83,14 @@ async function setResponsive(tabId, opts) {
     // clean slate so the user doesn't see a raw 'Debugger is not
     // attached' error in the popup.
     const msg = String(err && err.message || err);
-    if (msg.includes('not attached') || msg.includes('Debugger is not attached')) {
+    // Retry exactly once. Beyond that, throw -- if attach succeeded but
+    // sendCommand keeps reporting 'not attached', something stranger is
+    // wrong (Chrome auto-detaching during the call) and looping forever
+    // would freeze the SW.
+    if (!_retried && (msg.includes('not attached') || msg.includes('Debugger is not attached'))) {
       debugTabs.delete(tabId);
       await persistDebugTabs();
-      return setResponsive(tabId, opts);
+      return setResponsive(tabId, opts, true);
     }
     throw err;
   }
@@ -148,8 +152,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // session) but our <style> tag injected into <html> is wiped when the DOM
 // rebuilds. Without this, every reload anchors the page back to the
 // upper-left.
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   if (changeInfo.status !== 'complete') return;
+  // Wait for state restoration. If this listener fires immediately after
+  // SW wake-up (e.g., a tab finishes loading right as the SW comes back),
+  // debugTabs would otherwise be empty and we'd silently skip the
+  // re-application -- the centring frame would be missing for that tab.
+  await ready;
   const state = debugTabs.get(tabId);
   if (!state || !state.originalOuterW) return;
   if (state.originalOuterW <= state.width) return;
@@ -162,6 +171,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 // Recompute the frame when the user resizes the browser window so the
 // responsive viewport keeps tracking the center.
 chrome.windows.onBoundsChanged.addListener(async (win) => {
+  // Same race as onUpdated: a window resize that fires during SW wake-up
+  // would read an empty debugTabs and skip recompute, leaving the frame
+  // offsetX stale until the next user action triggers a recompute.
+  await ready;
   try {
     const tabs = await chrome.tabs.query({ windowId: win.id });
     for (const tab of tabs) {

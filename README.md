@@ -29,7 +29,7 @@ Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who
 - **Move the cursor over another element** — distance between the selection and the hover is drawn in red on every axis. **No modifier key required.** Works for side-by-side gaps and for nested cases (the four padding-style insets between an outer and an inner element).
 - **Drag anywhere** — free ruler between two arbitrary points, with live `dx` and `dy` pills. Same idea as Figma's Alt-drag, but no modifier key. The ruler stays drawn after release so you can read or screenshot the values; clear with `Esc` or by clicking on an element.
 - **Click any panel row** — copies the value to the clipboard, with a "Copied" toast.
-- **Resize the viewport** from the popup → Mobile (375), Tablet (768), Desktop (1440) presets, a Maximize reset, or any custom `W × H`. Backed by `chrome.windows.update` so media queries actually fire — real responsive testing, not visual scaling.
+- **Responsive viewport** from the popup → Mobile (375), Tablet (768), Desktop (1440) presets or any custom `W × H`. Same approach as DevTools' Device Mode: the page renders at the override dimensions inside the same browser window, media queries actually fire, and `window.innerWidth/innerHeight` reflect the override. Backed by Chrome's DevTools Protocol (`Emulation.setDeviceMetricsOverride` via `chrome.debugger`). Mobile / tablet presets also flip the `mobile` flag so `pointer: coarse` and touch emulation kick in.
 - **Smart breadcrumb** — picks `id`, then `data-testid`, then the first two CSS classes. Reads `button[data-testid="submit"]` instead of `button.bg-blue-500.text-white` in component-based codebases.
 - **Works inside iframes** — content scripts run in every frame in the tab (top + same-origin + cross-origin), so embedded widgets are inspectable too.
 - **Esc cleans up everywhere** — pressed in any frame, the inspector deactivates across the whole tab via the service worker.
@@ -162,9 +162,21 @@ python3 icons/generate.py
 
 ---
 
+## Limitations
+
+- **Responsive mode requires the `debugger` permission.** While it's on, Chrome shows a yellow "Caliper started debugging this browser" banner on the tab — this is enforced by Chrome to flag any extension using the DevTools Protocol and cannot be hidden. Opening DevTools (F12) detaches our session because only one debugger client can be attached to a tab at a time.
+- **Responsive mode is Chromium-only.** Chrome, Edge and Brave have `chrome.debugger`. Firefox uses a different debug protocol and Safari does not expose one to extensions, so the responsive presets are inert there. The rest of Caliper (inspector, distance lines, free ruler, contrast, panel) works on all three.
+- **Distance lines stay within a single frame.** Cross-frame distance would require postMessage plumbing across cross-origin iframes — design decision, not a bug.
+- **Multiple selections produce multiple panels** when inspecting different frames at once. Esc clears them.
+- **No persistence of selection or ruler across reloads.** Planned.
+- **No comparison against a Figma file yet** — planned.
+- **Safari ignores manifest-declared keyboard shortcuts.** Use the toolbar icon, or assign a shortcut in System Settings → Keyboard → App Shortcuts.
+
+---
+
 ## Keywords
 
-Chrome extension · Firefox extension · Safari web extension · Figma DevTools alternative · pixel-perfect QA · CSS inspector · web design QA · UX inspection tool · padding margin measurement · element distance overlay · Manifest V3 · source-available · noncommercial · PolyForm Noncommercial
+Chrome extension · Firefox extension · Safari web extension · Figma DevTools alternative · pixel-perfect QA · CSS inspector · web design QA · UX inspection tool · padding margin measurement · element distance overlay · responsive viewport simulator · Manifest V3 · source-available · noncommercial · PolyForm Noncommercial
 
 ---
 
@@ -178,9 +190,10 @@ When proposing UX changes, prefer iteration on `IDEA.md`'s decision log over rew
 
 ## Roadmap
 
-- v0.5 — comparison against Figma frames via the Figma REST API.
-- v0.6 — persistent selection across reloads (frame XPath cache).
-- v0.7 — Mozilla Add-ons listing and Mac App Store package for Safari.
+- v0.10 — gray letterbox around the responsive viewport area to match DevTools' Device Mode visual; rotate (W ↔ H) button; DPR override.
+- v0.11 — persistent selection and ruler across reloads (selector cache).
+- v0.12 — comparison against Figma frames via the Figma REST API.
+- v0.13 — Mozilla Add-ons listing and Mac App Store package for Safari.
 
 ---
 

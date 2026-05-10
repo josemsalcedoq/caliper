@@ -107,7 +107,14 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-// ---------- Viewport resize controls ----------
+// ---------- Responsive viewport controls ----------
+//
+// Backed by chrome.debugger -> Emulation.setDeviceMetricsOverride, the same
+// API DevTools' Device Mode uses. The browser window stays the same size;
+// the page renders at the override dimensions and media queries fire.
+// All chrome.debugger work happens in the service worker; the popup just
+// sends messages. Mobile presets request mobile=true so pointer:coarse and
+// touch-event emulation kick in.
 
 const viewportSection = document.getElementById('viewport-section');
 const customW = document.getElementById('custom-w');
@@ -128,72 +135,101 @@ async function getViewportInfo() {
   }
 }
 
-async function refreshViewportSize() {
-  const info = await getViewportInfo();
-  if (!info) {
+async function getResponsiveStatus(tabId) {
+  try {
+    return await chrome.runtime.sendMessage({
+      type: 'caliper/responsive-status',
+      tabId,
+    });
+  } catch {
+    return { active: false };
+  }
+}
+
+async function setResponsive(targetW, targetH, mobile) {
+  const tab = await getActiveTab();
+  if (!tab || !isInjectable(tab.url)) return;
+  const r = await chrome.runtime.sendMessage({
+    type: 'caliper/responsive-set',
+    tabId: tab.id,
+    width: Math.max(50, targetW | 0),
+    height: Math.max(50, targetH | 0),
+    mobile: !!mobile,
+  });
+  if (!r?.ok) {
+    currentSizeEl.textContent = r?.error?.includes('Cannot access')
+      ? 'Not available on this page'
+      : (r?.error || 'Could not start responsive mode');
+    return;
+  }
+  setTimeout(refreshResponsiveState, 120);
+}
+
+async function clearResponsive() {
+  const tab = await getActiveTab();
+  if (!tab) return;
+  await chrome.runtime.sendMessage({
+    type: 'caliper/responsive-clear',
+    tabId: tab.id,
+  });
+  setTimeout(refreshResponsiveState, 120);
+}
+
+async function refreshResponsiveState() {
+  const tab = await getActiveTab();
+  if (!tab || !isInjectable(tab.url)) {
     viewportSection.classList.add('is-disabled');
-    currentSizeEl.textContent = 'Refresh page to enable';
+    currentSizeEl.textContent = '—';
     return;
   }
   viewportSection.classList.remove('is-disabled');
-  currentSizeEl.textContent = `Currently ${info.innerW} × ${info.innerH}`;
-  if (document.activeElement !== customW) customW.value = info.innerW;
-  if (document.activeElement !== customH) customH.value = info.innerH;
-}
-
-async function resizeViewport(targetW, targetH) {
+  const status = await getResponsiveStatus(tab.id);
+  if (status?.active) {
+    currentSizeEl.innerHTML =
+      `<span class="hot">●</span> Responsive ${status.width} × ${status.height}` +
+      (status.mobile ? ' · mobile' : '');
+    if (document.activeElement !== customW) customW.value = status.width;
+    if (document.activeElement !== customH) customH.value = status.height;
+    return;
+  }
   const info = await getViewportInfo();
-  if (!info) return;
-  const tab = await getActiveTab();
-  if (!tab) return;
-  // outer-vs-inner gives us the real chrome (toolbar + tab strip + URL bar)
-  // for this OS / theme. Add it to the viewport target so the *viewport*
-  // ends up exactly at the requested size.
-  const widthDiff = Math.max(0, info.outerW - info.innerW);
-  const heightDiff = Math.max(0, info.outerH - info.innerH);
-  await chrome.windows.update(tab.windowId, {
-    state: 'normal', // un-maximize so width/height take effect
-    width: Math.max(220, targetW + widthDiff),
-    height: Math.max(220, targetH + heightDiff),
-  });
-  setTimeout(refreshViewportSize, 220);
-}
-
-async function maximizeWindow() {
-  const tab = await getActiveTab();
-  if (!tab) return;
-  await chrome.windows.update(tab.windowId, { state: 'maximized' });
-  setTimeout(refreshViewportSize, 220);
+  if (info) {
+    currentSizeEl.textContent = `Currently ${info.innerW} × ${info.innerH}`;
+    if (document.activeElement !== customW) customW.value = info.innerW;
+    if (document.activeElement !== customH) customH.value = info.innerH;
+  } else {
+    currentSizeEl.textContent = '—';
+  }
 }
 
 document.querySelectorAll('.preset[data-w]').forEach((btn) => {
   btn.addEventListener('click', () => {
     const w = parseInt(btn.dataset.w, 10);
     const h = parseInt(btn.dataset.h, 10);
-    if (w > 0 && h > 0) resizeViewport(w, h);
+    const mobile = btn.dataset.mobile === 'true';
+    if (w > 0 && h > 0) setResponsive(w, h, mobile);
   });
 });
 
 const resetBtn = document.querySelector('.preset[data-action="reset"]');
-if (resetBtn) resetBtn.addEventListener('click', maximizeWindow);
+if (resetBtn) resetBtn.addEventListener('click', clearResponsive);
 
 document.getElementById('apply-custom').addEventListener('click', () => {
   const w = parseInt(customW.value, 10);
   const h = parseInt(customH.value, 10);
-  if (w > 0 && h > 0) resizeViewport(w, h);
+  if (w > 0 && h > 0) setResponsive(w, h, false);
 });
 
-// Pressing Enter in either custom input applies the resize.
 [customW, customH].forEach((input) => {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const w = parseInt(customW.value, 10);
       const h = parseInt(customH.value, 10);
-      if (w > 0 && h > 0) resizeViewport(w, h);
+      if (w > 0 && h > 0) setResponsive(w, h, false);
     }
   });
 });
 
 refresh();
 loadShortcut();
-refreshViewportSize();
+refreshResponsiveState();

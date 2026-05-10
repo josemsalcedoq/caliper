@@ -305,3 +305,8 @@ body { padding: 14px 14px 12px; }
   color: var(--text-muted);
   text-align: center;
 }
+
+.current-size .hot {
+  color: var(--accent);
+  margin-right: 4px;
+}

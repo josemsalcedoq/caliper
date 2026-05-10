@@ -44,7 +44,9 @@
     // turn off in lockstep. Receivers pass {broadcast: false} to avoid loops.
     if (opts.broadcast !== false) {
       try {
-        chrome.runtime.sendMessage({ type: 'caliper/global-deactivate' });
+        chrome.runtime
+          .sendMessage({ type: 'caliper/global-deactivate' })
+          .catch(() => {});
       } catch (_) {}
     }
   }
@@ -277,8 +279,15 @@
   }
 
   function notify(active) {
+    // Two layers: try/catch handles a synchronous throw when chrome.runtime
+    // is undefined (extension context invalidated mid-call); .catch on the
+    // returned promise handles the async rejection that fires when no
+    // receiver exists. Without the latter, the unhandled rejection becomes
+    // a console warning in the user's DevTools.
     try {
-      chrome.runtime.sendMessage({ type: 'caliper/state', active });
+      chrome.runtime
+        .sendMessage({ type: 'caliper/state', active })
+        .catch(() => {});
     } catch (_) {
       /* no-op */
     }
@@ -340,6 +349,13 @@
   // window. Same path also covers the post-extension-reload case where
   // the SW restored its state from session storage but the page DOM has
   // no <style> tag yet.
+  //
+  // The else branch defensively clears any orphan <style> left over from
+  // a previous session. If the SW had cleared the override (e.g., Chrome
+  // detached the debugger after DevTools opened) but the frame-clear
+  // message never reached us, the body translate would still apply
+  // against a no-longer-overridden viewport -- the page would visibly
+  // shift offscreen. Clearing on every init guarantees consistency.
   (async function syncResponsiveOnLoad() {
     if (window.top !== window.self) return;
     try {
@@ -348,6 +364,8 @@
       });
       if (state?.active && state.offsetX) {
         applyResponsiveFrame(state.offsetX);
+      } else {
+        clearResponsiveFrame();
       }
     } catch (_) {}
   })();

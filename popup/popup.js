@@ -281,6 +281,15 @@ document.querySelectorAll('.dpr').forEach((btn) => {
   });
 });
 
+// Show the actual installed version. Hardcoding 'v0.1.0' in the markup
+// (as it was) silently lied to anyone opening the popup -- 10+ releases
+// in and they all read the original literal.
+try {
+  const v = chrome.runtime.getManifest().version;
+  const el = document.getElementById('version');
+  if (el && v) el.textContent = `v${v}`;
+} catch (_) {}
+
 refresh();
 loadShortcut();
 refreshResponsiveState();

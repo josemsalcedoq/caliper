@@ -1,5 +1,7 @@
 # Caliper — Figma-style web UI inspector
 
+![Caliper — inspect any web UI like Figma. Measure padding, margin, distance, typography.](assets/social-preview.png)
+
 > Hover any element to measure it. Click to inspect every CSS property in one panel. Move the cursor to see the distance between two elements drawn live in red — no DevTools, no guesswork.
 
 ![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg)

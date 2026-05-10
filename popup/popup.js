@@ -149,12 +149,18 @@ async function getResponsiveStatus(tabId) {
 async function setResponsive(targetW, targetH, mobile) {
   const tab = await getActiveTab();
   if (!tab || !isInjectable(tab.url)) return;
+  // Pass the current outer window width so the SW can compute a horizontal
+  // offset and ask the content script to translate <html> to roughly the
+  // centre of the actual window. Captured once at the SW level so we don't
+  // re-read after the override has been applied.
+  const info = await getViewportInfo();
   const r = await chrome.runtime.sendMessage({
     type: 'caliper/responsive-set',
     tabId: tab.id,
     width: Math.max(50, targetW | 0),
     height: Math.max(50, targetH | 0),
     mobile: !!mobile,
+    outerW: info?.outerW || 0,
   });
   if (!r?.ok) {
     currentSizeEl.textContent = r?.error?.includes('Cannot access')

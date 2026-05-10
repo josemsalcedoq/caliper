@@ -37,6 +37,12 @@ async function setResponsive(tabId, opts) {
   const dpr = opts.dpr || 1;
   const mobile = !!opts.mobile;
 
+  // Capture the original window outer width on first apply -- after the
+  // override is in effect we can't reliably read the real browser-window
+  // width from the page, so we keep it cached for subsequent preset changes.
+  const existing = debugTabs.get(tabId);
+  const originalOuterW = existing?.originalOuterW || opts.outerW || 0;
+
   if (!debugTabs.has(tabId)) {
     try {
       await chrome.debugger.attach(target, '1.3');
@@ -51,8 +57,19 @@ async function setResponsive(tabId, opts) {
     deviceScaleFactor: dpr,
     mobile,
   });
-  debugTabs.set(tabId, { width, height, dpr, mobile });
+  debugTabs.set(tabId, { width, height, dpr, mobile, originalOuterW });
   await persistDebugTabs();
+
+  // Visually centre the rendered viewport in the actual browser window. The
+  // grey letterbox of DevTools' Device Mode is part of its own UI overlay
+  // and not exposed via CDP -- this transform-based approach gives roughly
+  // the same balance (page in the middle) without the grey side panels.
+  if (originalOuterW > width) {
+    const offsetX = Math.floor((originalOuterW - width) / 2);
+    chrome.tabs
+      .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX })
+      .catch(() => {});
+  }
 }
 
 async function clearResponsive(tabId) {
@@ -66,6 +83,9 @@ async function clearResponsive(tabId) {
   } catch (_) {}
   debugTabs.delete(tabId);
   await persistDebugTabs();
+  chrome.tabs
+    .sendMessage(tabId, { type: 'caliper/responsive-frame-clear' })
+    .catch(() => {});
 }
 
 // User dismissed the yellow "is being debugged" banner, DevTools opened, the

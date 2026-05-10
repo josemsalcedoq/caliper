@@ -289,8 +289,7 @@
     }
     // Viewport metrics for the popup's resize controls. Responds whether
     // the inspector is active or not -- viewport resizing is independent
-    // of inspector state. The popup uses outer-vs-inner to compute the
-    // chrome height it needs to add when calling chrome.windows.update.
+    // of inspector state.
     if (msg?.type === 'caliper/get-viewport') {
       sendResponse({
         innerW: window.innerWidth,
@@ -301,5 +300,43 @@
       });
       return;
     }
+
+    // Visual centering for the responsive viewport. We can't paint outside
+    // the document (the area to the left/right of the rendered viewport is
+    // the browser's canvas surface, not ours), so we just translate <html>
+    // to roughly the centre of the actual window. DevTools' grey letterbox
+    // is part of its own UI overlay and isn't reachable from CDP.
+    if (msg?.type === 'caliper/responsive-frame') {
+      applyResponsiveFrame(msg.offsetX);
+      return;
+    }
+    if (msg?.type === 'caliper/responsive-frame-clear') {
+      clearResponsiveFrame();
+      return;
+    }
   });
+
+  function applyResponsiveFrame(offsetX) {
+    let style = document.getElementById('caliper-responsive-frame');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'caliper-responsive-frame';
+      document.documentElement.appendChild(style);
+    }
+    // Important: we transform the document root, not body. The inspector's
+    // shadow host lives inside <html>, so it follows the same translation
+    // and stays aligned with the elements it measures.
+    style.textContent = `
+      :root, html {
+        transform: translateX(${offsetX}px) !important;
+        transform-origin: top left !important;
+        transition: transform 140ms ease !important;
+      }
+    `;
+  }
+
+  function clearResponsiveFrame() {
+    const s = document.getElementById('caliper-responsive-frame');
+    if (s) s.remove();
+  }
 })();

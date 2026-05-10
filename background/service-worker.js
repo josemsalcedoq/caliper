@@ -89,12 +89,16 @@ async function clearResponsive(tabId) {
 }
 
 // User dismissed the yellow "is being debugged" banner, DevTools opened, the
-// renderer crashed, etc. Drop our state so the popup reflects reality on the
-// next query.
+// renderer crashed, etc. Drop our state and clear the visual frame in the
+// page -- otherwise the CSS transform on <html> stays applied while CDP has
+// already reverted the viewport override, leaving the page shifted offscreen.
 chrome.debugger.onDetach.addListener((source) => {
   if (source.tabId !== undefined) {
     debugTabs.delete(source.tabId);
     persistDebugTabs();
+    chrome.tabs
+      .sendMessage(source.tabId, { type: 'caliper/responsive-frame-clear' })
+      .catch(() => {});
   }
 });
 
@@ -103,6 +107,47 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     debugTabs.delete(tabId);
     persistDebugTabs();
   }
+});
+
+// Re-apply the centering frame after page reloads or in-tab navigations.
+// CDP overrides survive across loads (Chrome keeps them per debugger
+// session) but our <style> tag injected into <html> is wiped when the DOM
+// rebuilds. Without this, every reload anchors the page back to the
+// upper-left.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status !== 'complete') return;
+  const state = debugTabs.get(tabId);
+  if (!state || !state.originalOuterW) return;
+  if (state.originalOuterW <= state.width) return;
+  const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
+  chrome.tabs
+    .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX })
+    .catch(() => {});
+});
+
+// Recompute the frame when the user resizes the browser window so the
+// responsive viewport keeps tracking the center.
+chrome.windows.onBoundsChanged.addListener(async (win) => {
+  try {
+    const tabs = await chrome.tabs.query({ windowId: win.id });
+    for (const tab of tabs) {
+      if (!debugTabs.has(tab.id)) continue;
+      const state = debugTabs.get(tab.id);
+      const newOuterW = win.width;
+      if (newOuterW <= state.width) {
+        chrome.tabs
+          .sendMessage(tab.id, { type: 'caliper/responsive-frame-clear' })
+          .catch(() => {});
+        continue;
+      }
+      const offsetX = Math.floor((newOuterW - state.width) / 2);
+      debugTabs.set(tab.id, { ...state, originalOuterW: newOuterW });
+      await persistDebugTabs();
+      chrome.tabs
+        .sendMessage(tab.id, { type: 'caliper/responsive-frame', offsetX })
+        .catch(() => {});
+    }
+  } catch (_) {}
 });
 
 function isInjectable(url) {

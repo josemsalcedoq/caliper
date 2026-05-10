@@ -54,10 +54,27 @@
       </button>
     </div>
     <div class="custom-row">
-      <input type="number" id="custom-w" min="200" max="4000" placeholder="W" inputmode="numeric">
+      <input type="number" id="custom-w" min="50" max="4000" placeholder="W" inputmode="numeric">
       <span class="x">×</span>
-      <input type="number" id="custom-h" min="200" max="4000" placeholder="H" inputmode="numeric">
+      <input type="number" id="custom-h" min="50" max="4000" placeholder="H" inputmode="numeric">
       <button id="apply-custom" type="button">Apply</button>
+    </div>
+    <div class="aux-row">
+      <button id="rotate" class="aux-btn" type="button" title="Swap width and height">
+        <svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 7a5 5 0 0 1 9.5-2.2"/>
+          <path d="M11.5 2v3h-3"/>
+          <path d="M12 7a5 5 0 0 1-9.5 2.2"/>
+          <path d="M2.5 12V9h3"/>
+        </svg>
+        Rotate
+      </button>
+      <div class="dpr-group" role="group" aria-label="Device pixel ratio">
+        <span class="dpr-label">DPR</span>
+        <button class="dpr" data-dpr="1" type="button">1×</button>
+        <button class="dpr" data-dpr="2" type="button">2×</button>
+        <button class="dpr" data-dpr="3" type="button">3×</button>
+      </div>
     </div>
     <div class="current-size" id="current-size">—</div>
   </section>

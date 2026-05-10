@@ -146,13 +146,14 @@ async function getResponsiveStatus(tabId) {
   }
 }
 
+// Selected device-pixel-ratio for the responsive mode. Defaults to 1 and
+// is mirrored to the active button. Reading the previous selection from
+// the SW state lets the popup show the correct active state on reopen.
+let currentDpr = 1;
+
 async function setResponsive(targetW, targetH, mobile) {
   const tab = await getActiveTab();
   if (!tab || !isInjectable(tab.url)) return;
-  // Pass the current outer window width so the SW can compute a horizontal
-  // offset and ask the content script to translate <html> to roughly the
-  // centre of the actual window. Captured once at the SW level so we don't
-  // re-read after the override has been applied.
   const info = await getViewportInfo();
   const r = await chrome.runtime.sendMessage({
     type: 'caliper/responsive-set',
@@ -160,6 +161,7 @@ async function setResponsive(targetW, targetH, mobile) {
     width: Math.max(50, targetW | 0),
     height: Math.max(50, targetH | 0),
     mobile: !!mobile,
+    dpr: currentDpr,
     outerW: info?.outerW || 0,
   });
   if (!r?.ok) {
@@ -181,21 +183,32 @@ async function clearResponsive() {
   setTimeout(refreshResponsiveState, 120);
 }
 
+function syncDprButtons() {
+  document.querySelectorAll('.dpr').forEach((btn) => {
+    btn.classList.toggle('is-active', parseInt(btn.dataset.dpr, 10) === currentDpr);
+  });
+}
+
 async function refreshResponsiveState() {
   const tab = await getActiveTab();
   if (!tab || !isInjectable(tab.url)) {
     viewportSection.classList.add('is-disabled');
     currentSizeEl.textContent = '—';
+    syncDprButtons();
     return;
   }
   viewportSection.classList.remove('is-disabled');
   const status = await getResponsiveStatus(tab.id);
   if (status?.active) {
+    if (status.dpr) currentDpr = status.dpr;
+    const dprNote = status.dpr && status.dpr !== 1 ? ` · ${status.dpr}×` : '';
     currentSizeEl.innerHTML =
       `<span class="hot">●</span> Responsive ${status.width} × ${status.height}` +
-      (status.mobile ? ' · mobile' : '');
+      (status.mobile ? ' · mobile' : '') +
+      dprNote;
     if (document.activeElement !== customW) customW.value = status.width;
     if (document.activeElement !== customH) customH.value = status.height;
+    syncDprButtons();
     return;
   }
   const info = await getViewportInfo();
@@ -206,6 +219,7 @@ async function refreshResponsiveState() {
   } else {
     currentSizeEl.textContent = '—';
   }
+  syncDprButtons();
 }
 
 document.querySelectorAll('.preset[data-w]').forEach((btn) => {
@@ -233,6 +247,37 @@ document.getElementById('apply-custom').addEventListener('click', () => {
       const h = parseInt(customH.value, 10);
       if (w > 0 && h > 0) setResponsive(w, h, false);
     }
+  });
+});
+
+// Rotate: swap width and height. If responsive mode isn't active yet we
+// just swap the input values so the user can apply manually; if it's
+// active we re-issue the responsive command immediately.
+document.getElementById('rotate').addEventListener('click', async () => {
+  const w = parseInt(customW.value, 10) || 0;
+  const h = parseInt(customH.value, 10) || 0;
+  if (!w || !h) return;
+  customW.value = h;
+  customH.value = w;
+  const tab = await getActiveTab();
+  if (!tab) return;
+  const status = await getResponsiveStatus(tab.id);
+  if (status?.active) setResponsive(h, w, !!status.mobile);
+});
+
+// DPR buttons swap deviceScaleFactor for the next setResponsive call. If
+// responsive mode is already active, re-apply with the new DPR right away
+// so the change takes effect immediately.
+document.querySelectorAll('.dpr').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const next = parseInt(btn.dataset.dpr, 10) || 1;
+    if (next === currentDpr) return;
+    currentDpr = next;
+    syncDprButtons();
+    const tab = await getActiveTab();
+    if (!tab) return;
+    const status = await getResponsiveStatus(tab.id);
+    if (status?.active) setResponsive(status.width, status.height, !!status.mobile);
   });
 });
 

@@ -179,7 +179,7 @@
     const layer = A.layers.box;
     layer.appendChild(makeOutline(box));
     const fmt = window.__Caliper.utils.fmt;
-    const text = `${fmt(box.w)} × ${fmt(box.h)}`;
+    const text = `${fmt(box.w)} × ${fmt(box.h)}px`;
     layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
   };
 
@@ -227,7 +227,7 @@
       );
 
     layer.appendChild(makeOutline(box));
-    const text = `${U.fmt(box.w)} × ${U.fmt(box.h)}`;
+    const text = `${U.fmt(box.w)} × ${U.fmt(box.h)}px`;
     layer.appendChild(makePill(text, box.x + box.w / 2, pillBelowOrAbove(box)));
   };
 
@@ -256,7 +256,7 @@
       layer.appendChild(makeRect('dline', xGap.x1, y, w, 1));
       layer.appendChild(makeRect('dcap', xGap.x1, y - 3, 1, 7));
       layer.appendChild(makeRect('dcap', xGap.x2 - 1, y - 3, 1, 7));
-      layer.appendChild(makePill(`${U.fmt(xGap.value)}`, xGap.x1 + w / 2, y - 14, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(xGap.value)}px`, xGap.x1 + w / 2, y - 14, 'measure'));
     }
 
     // Y axis
@@ -274,7 +274,7 @@
       layer.appendChild(makeRect('dline', x, yGap.y1, 1, h));
       layer.appendChild(makeRect('dcap', x - 3, yGap.y1, 7, 1));
       layer.appendChild(makeRect('dcap', x - 3, yGap.y2 - 1, 7, 1));
-      layer.appendChild(makePill(`${U.fmt(yGap.value)}`, x + 18, yGap.y1 + h / 2, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(yGap.value)}px`, x + 18, yGap.y1 + h / 2, 'measure'));
     }
 
     // Inset distances. When neither axis has a positive gap, one element may
@@ -321,14 +321,14 @@
       layer.appendChild(makeRect('dcap', minX, y1 - 3, 1, 7));
       layer.appendChild(makeRect('dcap', maxX - 1, y1 - 3, 1, 7));
       const pillY = y2 > y1 ? y1 - 14 : y1 + 14;
-      layer.appendChild(makePill(`${U.fmt(dx)}`, minX + dx / 2, pillY, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(dx)}px`, minX + dx / 2, pillY, 'measure'));
     }
     if (dy >= 1) {
       layer.appendChild(makeRect('dline', x2, minY, 1, dy));
       layer.appendChild(makeRect('dcap', x2 - 3, minY, 7, 1));
       layer.appendChild(makeRect('dcap', x2 - 3, maxY - 1, 7, 1));
       const pillX = x2 > x1 ? x2 + 18 : x2 - 18;
-      layer.appendChild(makePill(`${U.fmt(dy)}`, pillX, minY + dy / 2, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(dy)}px`, pillX, minY + dy / 2, 'measure'));
     }
 
     drawDot(layer, x1, y1);
@@ -364,27 +364,27 @@
       layer.appendChild(makeRect('dline', cx, outer.y, 1, top));
       layer.appendChild(makeRect('dcap', cx - 3, outer.y, 7, 1));
       layer.appendChild(makeRect('dcap', cx - 3, inner.y - 1, 7, 1));
-      layer.appendChild(makePill(`${U.fmt(top)}`, cx + 18, outer.y + top / 2, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(top)}px`, cx + 18, outer.y + top / 2, 'measure'));
     }
     if (right > 0) {
       const x1 = inner.x + inner.w;
       layer.appendChild(makeRect('dline', x1, cy, right, 1));
       layer.appendChild(makeRect('dcap', x1, cy - 3, 1, 7));
       layer.appendChild(makeRect('dcap', x1 + right - 1, cy - 3, 1, 7));
-      layer.appendChild(makePill(`${U.fmt(right)}`, x1 + right / 2, cy - 14, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(right)}px`, x1 + right / 2, cy - 14, 'measure'));
     }
     if (bottom > 0) {
       const y1 = inner.y + inner.h;
       layer.appendChild(makeRect('dline', cx, y1, 1, bottom));
       layer.appendChild(makeRect('dcap', cx - 3, y1, 7, 1));
       layer.appendChild(makeRect('dcap', cx - 3, y1 + bottom - 1, 7, 1));
-      layer.appendChild(makePill(`${U.fmt(bottom)}`, cx + 18, y1 + bottom / 2, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(bottom)}px`, cx + 18, y1 + bottom / 2, 'measure'));
     }
     if (left > 0) {
       layer.appendChild(makeRect('dline', outer.x, cy, left, 1));
       layer.appendChild(makeRect('dcap', outer.x, cy - 3, 1, 7));
       layer.appendChild(makeRect('dcap', outer.x + left - 1, cy - 3, 1, 7));
-      layer.appendChild(makePill(`${U.fmt(left)}`, outer.x + left / 2, cy - 14, 'measure'));
+      layer.appendChild(makePill(`${U.fmt(left)}px`, outer.x + left / 2, cy - 14, 'measure'));
     }
   }
 })();

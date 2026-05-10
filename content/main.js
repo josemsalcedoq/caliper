@@ -317,17 +317,41 @@
   });
 
   function applyResponsiveFrame(offsetX) {
+    // Only the top frame centres the page. Iframes have their own content
+    // script and would otherwise transform their own <body>, shifting the
+    // iframe's content outside the iframe's clip box (effectively hiding
+    // it). The SW also sends with { frameId: 0 } as a second guard.
+    if (window.top !== window.self) return;
+
     let style = document.getElementById('caliper-responsive-frame');
     if (!style) {
       style = document.createElement('style');
       style.id = 'caliper-responsive-frame';
       document.documentElement.appendChild(style);
     }
-    // Important: we transform the document root, not body. The inspector's
-    // shadow host lives inside <html>, so it follows the same translation
-    // and stays aligned with the elements it measures.
+    // Transform <body>, NOT <html>. Earlier we transformed <html>, which
+    // looked right standalone -- but combined with the inspector it broke
+    // alignment. Reasoning:
+    //
+    //   1. CSS spec: an element with `transform` becomes a containing block
+    //      for its position:absolute descendants.
+    //   2. Our shadow host is position:absolute and a direct child of
+    //      <html>. With <html> transformed, the host's containing block
+    //      switches from the viewport to the transformed <html>.
+    //   3. Overlay children inside the host are positioned using
+    //      `left: ${rect.left}px`, where rect.left already includes
+    //      ancestor transforms (per getBoundingClientRect spec).
+    //   4. Result: the offsetX is applied twice -- once via rect.left, once
+    //      via the host's now-transformed containing block. Outlines render
+    //      offsetX pixels off from the elements they measure.
+    //
+    // Transforming <body> sidesteps the whole thing because the host is a
+    // sibling of <body>, not a descendant. The host stays in the original
+    // viewport coordinate system; rect.left from a transformed-body
+    // descendant gives the correct visual position; one application of the
+    // offset, alignment intact.
     style.textContent = `
-      :root, html {
+      body {
         transform: translateX(${offsetX}px) !important;
         transform-origin: top left !important;
         transition: transform 140ms ease !important;

@@ -67,7 +67,7 @@ async function setResponsive(tabId, opts) {
   if (originalOuterW > width) {
     const offsetX = Math.floor((originalOuterW - width) / 2);
     chrome.tabs
-      .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX })
+      .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX }, { frameId: 0 })
       .catch(() => {});
   }
 }
@@ -84,7 +84,7 @@ async function clearResponsive(tabId) {
   debugTabs.delete(tabId);
   await persistDebugTabs();
   chrome.tabs
-    .sendMessage(tabId, { type: 'caliper/responsive-frame-clear' })
+    .sendMessage(tabId, { type: 'caliper/responsive-frame-clear' }, { frameId: 0 })
     .catch(() => {});
 }
 
@@ -97,7 +97,7 @@ chrome.debugger.onDetach.addListener((source) => {
     debugTabs.delete(source.tabId);
     persistDebugTabs();
     chrome.tabs
-      .sendMessage(source.tabId, { type: 'caliper/responsive-frame-clear' })
+      .sendMessage(source.tabId, { type: 'caliper/responsive-frame-clear' }, { frameId: 0 })
       .catch(() => {});
   }
 });
@@ -121,7 +121,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (state.originalOuterW <= state.width) return;
   const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
   chrome.tabs
-    .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX })
+    .sendMessage(tabId, { type: 'caliper/responsive-frame', offsetX }, { frameId: 0 })
     .catch(() => {});
 });
 
@@ -136,7 +136,7 @@ chrome.windows.onBoundsChanged.addListener(async (win) => {
       const newOuterW = win.width;
       if (newOuterW <= state.width) {
         chrome.tabs
-          .sendMessage(tab.id, { type: 'caliper/responsive-frame-clear' })
+          .sendMessage(tab.id, { type: 'caliper/responsive-frame-clear' }, { frameId: 0 })
           .catch(() => {});
         continue;
       }
@@ -144,7 +144,7 @@ chrome.windows.onBoundsChanged.addListener(async (win) => {
       debugTabs.set(tab.id, { ...state, originalOuterW: newOuterW });
       await persistDebugTabs();
       chrome.tabs
-        .sendMessage(tab.id, { type: 'caliper/responsive-frame', offsetX })
+        .sendMessage(tab.id, { type: 'caliper/responsive-frame', offsetX }, { frameId: 0 })
         .catch(() => {});
     }
   } catch (_) {}

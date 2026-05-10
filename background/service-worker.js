@@ -68,12 +68,28 @@ async function setResponsive(tabId, opts) {
       if (!msg.includes('already attached')) throw err;
     }
   }
-  await chrome.debugger.sendCommand(target, 'Emulation.setDeviceMetricsOverride', {
-    width,
-    height,
-    deviceScaleFactor: dpr,
-    mobile,
-  });
+  try {
+    await chrome.debugger.sendCommand(target, 'Emulation.setDeviceMetricsOverride', {
+      width,
+      height,
+      deviceScaleFactor: dpr,
+      mobile,
+    });
+  } catch (err) {
+    // Stale entry: our Map said this tab was attached but Chrome had
+    // already detached the session (typical after an extension reload --
+    // Chrome auto-detaches debugger sessions, then our restored state
+    // disagrees with reality). Drop the stale entry and retry from a
+    // clean slate so the user doesn't see a raw 'Debugger is not
+    // attached' error in the popup.
+    const msg = String(err && err.message || err);
+    if (msg.includes('not attached') || msg.includes('Debugger is not attached')) {
+      debugTabs.delete(tabId);
+      await persistDebugTabs();
+      return setResponsive(tabId, opts);
+    }
+    throw err;
+  }
   debugTabs.set(tabId, { width, height, dpr, mobile, originalOuterW });
   await persistDebugTabs();
 

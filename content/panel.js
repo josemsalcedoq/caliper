@@ -229,6 +229,11 @@
   let panelEl = null;
   let toastEl = null;
   let toastTimer = null;
+  // Track which element the panel currently shows so populate() can preserve
+  // scrollTop on re-renders for the same element (mousemove changing hover,
+  // window resize, responsive override change, etc.) but reset to top when
+  // the user switches selection.
+  let lastEl = null;
 
   P.show = function (el) {
     if (!A.shadow) return;
@@ -242,6 +247,7 @@
   P.hide = function () {
     if (panelEl && panelEl.parentNode) panelEl.parentNode.removeChild(panelEl);
     panelEl = null;
+    lastEl = null;
   };
 
   P.flash = function (text) {
@@ -302,6 +308,12 @@
     tag.title = path;
 
     const body = panelEl.querySelector('.panel-body');
+    // Preserve the user's scroll position only when re-rendering the SAME
+    // element (mousemove, scroll, window resize, etc.). When the selected
+    // element changes, scroll back to the top so the new properties read
+    // from the breadcrumb downward.
+    const isSameEl = lastEl === el;
+    const scrollTop = isSameEl ? body.scrollTop : 0;
     body.replaceChildren();
 
     // Layout
@@ -386,6 +398,9 @@
     const op = parseFloat(cs.opacity);
     if (op < 1) fxRows.push(row('Opacity', `${Math.round(op * 100)}%`));
     if (fxRows.length) body.appendChild(section('Effects', fxRows));
+
+    body.scrollTop = scrollTop;
+    lastEl = el;
   }
 
   function section(title, rows) {

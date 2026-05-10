@@ -29,6 +29,7 @@ Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who
 - **Move the cursor over another element** — distance between the selection and the hover is drawn in red on every axis. **No modifier key required.** Works for side-by-side gaps and for nested cases (the four padding-style insets between an outer and an inner element).
 - **Drag anywhere** — free ruler between two arbitrary points, with live `dx` and `dy` pills. Same idea as Figma's Alt-drag, but no modifier key. The ruler stays drawn after release so you can read or screenshot the values; clear with `Esc` or by clicking on an element.
 - **Click any panel row** — copies the value to the clipboard, with a "Copied" toast.
+- **Resize the viewport** from the popup → Mobile (375), Tablet (768), Desktop (1440) presets, a Maximize reset, or any custom `W × H`. Backed by `chrome.windows.update` so media queries actually fire — real responsive testing, not visual scaling.
 - **Smart breadcrumb** — picks `id`, then `data-testid`, then the first two CSS classes. Reads `button[data-testid="submit"]` instead of `button.bg-blue-500.text-white` in component-based codebases.
 - **Works inside iframes** — content scripts run in every frame in the tab (top + same-origin + cross-origin), so embedded widgets are inspectable too.
 - **Esc cleans up everywhere** — pressed in any frame, the inspector deactivates across the whole tab via the service worker.

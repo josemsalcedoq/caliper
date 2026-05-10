@@ -107,5 +107,93 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
+// ---------- Viewport resize controls ----------
+
+const viewportSection = document.getElementById('viewport-section');
+const customW = document.getElementById('custom-w');
+const customH = document.getElementById('custom-h');
+const currentSizeEl = document.getElementById('current-size');
+
+async function getViewportInfo() {
+  const tab = await getActiveTab();
+  if (!tab || !isInjectable(tab.url)) return null;
+  try {
+    return await chrome.tabs.sendMessage(
+      tab.id,
+      { type: 'caliper/get-viewport' },
+      { frameId: 0 }
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function refreshViewportSize() {
+  const info = await getViewportInfo();
+  if (!info) {
+    viewportSection.classList.add('is-disabled');
+    currentSizeEl.textContent = 'Refresh page to enable';
+    return;
+  }
+  viewportSection.classList.remove('is-disabled');
+  currentSizeEl.textContent = `Currently ${info.innerW} × ${info.innerH}`;
+  if (document.activeElement !== customW) customW.value = info.innerW;
+  if (document.activeElement !== customH) customH.value = info.innerH;
+}
+
+async function resizeViewport(targetW, targetH) {
+  const info = await getViewportInfo();
+  if (!info) return;
+  const tab = await getActiveTab();
+  if (!tab) return;
+  // outer-vs-inner gives us the real chrome (toolbar + tab strip + URL bar)
+  // for this OS / theme. Add it to the viewport target so the *viewport*
+  // ends up exactly at the requested size.
+  const widthDiff = Math.max(0, info.outerW - info.innerW);
+  const heightDiff = Math.max(0, info.outerH - info.innerH);
+  await chrome.windows.update(tab.windowId, {
+    state: 'normal', // un-maximize so width/height take effect
+    width: Math.max(220, targetW + widthDiff),
+    height: Math.max(220, targetH + heightDiff),
+  });
+  setTimeout(refreshViewportSize, 220);
+}
+
+async function maximizeWindow() {
+  const tab = await getActiveTab();
+  if (!tab) return;
+  await chrome.windows.update(tab.windowId, { state: 'maximized' });
+  setTimeout(refreshViewportSize, 220);
+}
+
+document.querySelectorAll('.preset[data-w]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const w = parseInt(btn.dataset.w, 10);
+    const h = parseInt(btn.dataset.h, 10);
+    if (w > 0 && h > 0) resizeViewport(w, h);
+  });
+});
+
+const resetBtn = document.querySelector('.preset[data-action="reset"]');
+if (resetBtn) resetBtn.addEventListener('click', maximizeWindow);
+
+document.getElementById('apply-custom').addEventListener('click', () => {
+  const w = parseInt(customW.value, 10);
+  const h = parseInt(customH.value, 10);
+  if (w > 0 && h > 0) resizeViewport(w, h);
+});
+
+// Pressing Enter in either custom input applies the resize.
+[customW, customH].forEach((input) => {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const w = parseInt(customW.value, 10);
+      const h = parseInt(customH.value, 10);
+      if (w > 0 && h > 0) resizeViewport(w, h);
+    }
+  });
+});
+
 refresh();
 loadShortcut();
+refreshViewportSize();

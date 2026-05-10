@@ -37,6 +37,31 @@
     <div class="legend-row"><kbd>Esc</kbd><span>clear / deselect / exit</span></div>
   </div>
 
+  <section class="viewport" id="viewport-section">
+    <div class="section-title">Viewport size</div>
+    <div class="presets">
+      <button class="preset" data-w="375" data-h="667" type="button">
+        <span class="preset-w">375</span><span class="preset-label">Mobile</span>
+      </button>
+      <button class="preset" data-w="768" data-h="1024" type="button">
+        <span class="preset-w">768</span><span class="preset-label">Tablet</span>
+      </button>
+      <button class="preset" data-w="1440" data-h="900" type="button">
+        <span class="preset-w">1440</span><span class="preset-label">Desktop</span>
+      </button>
+      <button class="preset" data-action="reset" type="button">
+        <span class="preset-w">⤢</span><span class="preset-label">Max</span>
+      </button>
+    </div>
+    <div class="custom-row">
+      <input type="number" id="custom-w" min="200" max="4000" placeholder="W" inputmode="numeric">
+      <span class="x">×</span>
+      <input type="number" id="custom-h" min="200" max="4000" placeholder="H" inputmode="numeric">
+      <button id="apply-custom" type="button">Apply</button>
+    </div>
+    <div class="current-size" id="current-size">—</div>
+  </section>
+
   <a id="shortcut-link" class="link" href="#">Customize keyboard shortcut →</a>
 
   <script src="popup.js"></script>

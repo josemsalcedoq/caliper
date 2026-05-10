@@ -287,5 +287,19 @@
       sendResponse({ active: false });
       return;
     }
+    // Viewport metrics for the popup's resize controls. Responds whether
+    // the inspector is active or not -- viewport resizing is independent
+    // of inspector state. The popup uses outer-vs-inner to compute the
+    // chrome height it needs to add when calling chrome.windows.update.
+    if (msg?.type === 'caliper/get-viewport') {
+      sendResponse({
+        innerW: window.innerWidth,
+        innerH: window.innerHeight,
+        outerW: window.outerWidth,
+        outerH: window.outerHeight,
+        dpr: window.devicePixelRatio || 1,
+      });
+      return;
+    }
   });
 })();

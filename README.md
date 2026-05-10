@@ -222,3 +222,11 @@ The software is provided "AS IS" under the PolyForm Noncommercial License with n
 Caliper is an independent open-source project. It is **not affiliated with, endorsed by, sponsored by, or in any way officially connected to Figma, Inc.** or any of its subsidiaries or affiliates. Figma references throughout this documentation describe the inspection workflow that Caliper aims to reproduce, used for nominative comparison only. "Figma" and the Figma logo are trademarks of Figma, Inc.
 
 The same applies to other third-party tools and brands mentioned (Chrome, Edge, Firefox, Safari, Tailwind, PerfectPixel, VisBug, etc.) — these are referenced descriptively for compatibility and comparison, not as endorsements or partnerships.
+
+### Built with Claude Code
+
+Caliper was developed in collaboration with [Claude Code](https://claude.com/claude-code), Anthropic's CLI for Claude — pair-programming throughout for code, documentation and architectural reasoning. Scope, direction and final review live with the maintainer. The "AS IS, no warranty" terms of the [LICENSE](LICENSE) apply to the resulting software regardless of how it was authored.
+
+---
+
+<p align="center"><sub>Crafted with <a href="https://claude.com/claude-code"><b>Claude Code</b></a></sub></p>

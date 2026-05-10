@@ -367,6 +367,19 @@
         type: 'caliper/responsive-self-state',
       });
       if (state?.active && state.offsetX) {
+        // Sanity check: if the SW says we're at a responsive width of N
+        // but our actual viewport is much wider, the CDP override has
+        // been dropped (typical cause: user clicked 'Cancel' on the
+        // yellow debug banner directly). Re-applying the body transform
+        // would shift the page across the now-real-width viewport. Clear
+        // the orphan style and tell the SW to clean up its stale state.
+        if (state.width && Math.abs(window.innerWidth - state.width) > 5) {
+          clearResponsiveFrame();
+          chrome.runtime
+            .sendMessage({ type: 'caliper/responsive-stale-detected' })
+            .catch(() => {});
+          return;
+        }
         applyResponsiveFrame(state.offsetX);
       } else {
         clearResponsiveFrame();

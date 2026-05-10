@@ -128,22 +128,25 @@ async function clearResponsive(tabId) {
 
 // User dismissed the yellow "is being debugged" banner, DevTools opened, the
 // renderer crashed, etc. Drop our state and clear the visual frame in the
-// page -- otherwise the CSS transform on <html> stays applied while CDP has
-// already reverted the viewport override, leaving the page shifted offscreen.
-chrome.debugger.onDetach.addListener((source) => {
+// page. The handler is async so Chrome keeps the SW alive until persist
+// completes -- earlier this was a fire-and-forget call and the storage
+// write could be lost if the SW suspended before the async write settled,
+// leaving the next page reload reading stale state and re-applying the
+// frame against a viewport that no longer has the CDP override active.
+chrome.debugger.onDetach.addListener(async (source) => {
   if (source.tabId !== undefined) {
     debugTabs.delete(source.tabId);
-    persistDebugTabs();
+    await persistDebugTabs();
     chrome.tabs
       .sendMessage(source.tabId, { type: 'caliper/responsive-frame-clear' }, { frameId: 0 })
       .catch(() => {});
   }
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(async (tabId) => {
   if (debugTabs.has(tabId)) {
     debugTabs.delete(tabId);
-    persistDebugTabs();
+    await persistDebugTabs();
   }
 });
 
@@ -263,7 +266,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   // Pull-side counterpart of the push via tabs.onUpdated. Content scripts
   // ask for current state on load; this closes the race when the push
-  // fires before the receiver's onMessage listener exists.
+  // fires before the receiver's onMessage listener exists. Also returns
+  // the expected width so the content side can sanity-check whether the
+  // CDP override is actually still active before re-applying the frame.
   if (msg?.type === 'caliper/responsive-self-state' && tabId) {
     ready.then(() => {
       const state = debugTabs.get(tabId);
@@ -272,8 +277,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return;
       }
       const offsetX = Math.floor((state.originalOuterW - state.width) / 2);
-      sendResponse({ active: true, offsetX });
+      sendResponse({ active: true, offsetX, width: state.width });
     });
+    return true;
+  }
+
+  // Content has detected that our state is stale -- it asked for self-state,
+  // got 'active' with width N, but its actual window.innerWidth is much
+  // larger, meaning the CDP override silently went away (most often: user
+  // clicked the yellow banner's Cancel directly). Clean up properly so the
+  // next page action doesn't re-trigger the broken state.
+  if (msg?.type === 'caliper/responsive-stale-detected' && tabId) {
+    clearResponsive(tabId)
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
     return true;
   }
 });

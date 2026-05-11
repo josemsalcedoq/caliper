@@ -34,6 +34,11 @@
     S.ruler = null;
     S.dragStart = null;
     S.dragging = false;
+    // Restore the page to its pre-edit state before tearing the UI down.
+    // Otherwise inline-style overrides survive deactivation, which would
+    // be surprising: the user disables the inspector expecting the page
+    // to look untouched.
+    if (A.overrides) A.overrides.revertAll();
     detachListeners();
     A.panel.hide();
     A.overlay.tearDown();
@@ -223,6 +228,13 @@
 
   function onKeyDown(e) {
     if (!S.active) return;
+    // Focus is inside our panel (an editable input/select). Let the
+    // panel's own keydown listener decide what Esc/Enter mean there --
+    // Esc inside an edit field cancels the edit, it shouldn't ALSO walk
+    // the global ruler→selection→off cycle. composedPath retargets to the
+    // host at the document level, but A.shadow.activeElement gives us the
+    // actual focused node inside the closed shadow root.
+    if (A.shadow && A.shadow.activeElement) return;
     if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
@@ -259,6 +271,11 @@
     if (S.hovered && !document.contains(S.hovered)) {
       S.hovered = null;
     }
+    // Drop override entries whose element has been detached from the
+    // document (SPA route changes most commonly). Without this the
+    // footer's "Reset all (N)" counter would keep climbing across
+    // navigations and reference nodes that no longer paint anything.
+    if (A.overrides) A.overrides.prune();
     if (!S.active) return;
     A.overlay.clear();
     if (S.selected) {

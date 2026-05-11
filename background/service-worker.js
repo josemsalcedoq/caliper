@@ -205,6 +205,7 @@ function isInjectable(url) {
   if (/^(chrome|edge|about|chrome-extension|view-source|devtools):/.test(url)) return false;
   if (url.startsWith('https://chrome.google.com/webstore')) return false;
   if (url.startsWith('https://chromewebstore.google.com')) return false;
+  if (url.startsWith('https://microsoftedge.microsoft.com/addons')) return false;
   return true;
 }
 

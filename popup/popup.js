@@ -4,11 +4,24 @@ const kbdEl = document.getElementById('kbd');
 const statusMsg = document.getElementById('status-msg');
 const shortcutLink = document.getElementById('shortcut-link');
 
+// Modern Edge keeps the chrome.* API surface but its internal pages live at
+// edge://, not chrome://. Detect via the "Edg/" UA token (Edge Legacy used
+// "Edge/" — we want only the Chromium-based one). Brave and other Chromium
+// forks keep chrome:// for their settings pages so they don't need a branch.
+function isEdge() {
+  return /\bEdg\//.test(navigator.userAgent);
+}
+
+function shortcutsUrl() {
+  return isEdge() ? 'edge://extensions/shortcuts' : 'chrome://extensions/shortcuts';
+}
+
 function isInjectable(url) {
   if (!url) return false;
   if (/^(chrome|edge|about|chrome-extension|view-source|devtools):/.test(url)) return false;
   if (url.startsWith('https://chrome.google.com/webstore')) return false;
   if (url.startsWith('https://chromewebstore.google.com')) return false;
+  if (url.startsWith('https://microsoftedge.microsoft.com/addons')) return false;
   return true;
 }
 
@@ -44,7 +57,7 @@ function setUI({ status }) {
       labelEl.textContent = 'Not available on this page';
       statusMsg.hidden = false;
       statusMsg.textContent =
-        'Chrome blocks extensions on internal pages (chrome://, extension store, etc.). Try it on any normal website.';
+        'Browsers block extensions on their internal pages (chrome://, edge://, extension stores, etc.). Try it on any normal website.';
       break;
     default:
       // Defensive: unexpected status leaves the label honest about the
@@ -103,7 +116,7 @@ toggleBtn.addEventListener('click', async () => {
 
 shortcutLink.addEventListener('click', (e) => {
   e.preventDefault();
-  chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+  chrome.tabs.create({ url: shortcutsUrl() });
 });
 
 chrome.runtime.onMessage.addListener((msg) => {

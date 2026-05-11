@@ -7,12 +7,13 @@
 ![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg)
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-green.svg)
 ![Chrome](https://img.shields.io/badge/chrome-supported-success.svg)
+![Edge](https://img.shields.io/badge/edge-supported-success.svg)
 ![Firefox](https://img.shields.io/badge/firefox-121%2B-orange.svg)
 ![Safari](https://img.shields.io/badge/safari-16.4%2B-blue.svg)
 
 ![Caliper running on google.com — the Google logo is selected with a blue outline and a 272 × 92 dimension pill, a red 192.5px distance line connects it to a hovered link below, and the dark Caliper panel on the top right shows the selection's layout properties](assets/inspector.png)
 
-Caliper is a cross-browser web extension that turns any page into a Figma-style inspect surface. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. Caliper collapses that loop into hover-and-click.
+Caliper is a cross-browser web extension that turns any page into a Figma-style inspect surface — runs on Chrome, Microsoft Edge, Brave, Firefox and Safari from the same source folder. It exists because shipping pixel-perfect implementations against a Figma mockup means flipping between Figma, the browser and DevTools dozens of times per session — measuring padding, comparing font sizes, eyeballing distances. Caliper collapses that loop into hover-and-click.
 
 Built for **frontend developers**, **UX/UI designers**, and **QA engineers** who want a CSS inspector that thinks like a design tool, not a debugger.
 
@@ -65,14 +66,14 @@ Caliper: hover, click, read the panel. Done.
 
 The same source folder loads into Chrome, Edge, Firefox and Safari. No build step, no per-browser variants.
 
-### Chrome / Edge / Brave
+### Chrome / Microsoft Edge / Brave
 
-1. Open `chrome://extensions/` (or `edge://extensions/`).
+1. Open `chrome://extensions/` (or `edge://extensions/` on Edge).
 2. Enable **Developer mode** (top-right toggle).
 3. Click **Load unpacked** and pick this folder.
 4. Refresh any tab you had open before installing.
 
-Customise the keyboard shortcut at `chrome://extensions/shortcuts`.
+Customise the keyboard shortcut at `chrome://extensions/shortcuts` (Chrome / Brave) or `edge://extensions/shortcuts` (Edge). The popup's *Customize keyboard shortcut* link routes to whichever is correct for the running browser.
 
 ### Firefox 121+
 
@@ -166,8 +167,8 @@ python3 icons/generate.py
 
 ## Limitations
 
-- **Responsive mode requires the `debugger` permission.** While it's on, Chrome shows a yellow "Caliper started debugging this browser" banner on the tab — this is enforced by Chrome to flag any extension using the DevTools Protocol and cannot be hidden. Opening DevTools (F12) detaches our session because only one debugger client can be attached to a tab at a time.
-- **Responsive mode is Chromium-only.** Chrome, Edge and Brave have `chrome.debugger`. Firefox uses a different debug protocol and Safari does not expose one to extensions, so the responsive presets are inert there. The rest of Caliper (inspector, distance lines, free ruler, contrast, panel) works on all three.
+- **Responsive mode requires the `debugger` permission.** While it's on, the browser shows a yellow "Caliper started debugging this browser" banner on the tab — this is enforced by Chromium to flag any extension using the DevTools Protocol and cannot be hidden (applies equally to Chrome, Edge and Brave). Opening DevTools (F12) detaches our session because only one debugger client can be attached to a tab at a time.
+- **Responsive mode is Chromium-only.** Chrome, Microsoft Edge and Brave have `chrome.debugger`. Firefox uses a different debug protocol and Safari does not expose one to extensions, so the responsive presets are inert there. The rest of Caliper (inspector, distance lines, free ruler, contrast, panel) works everywhere.
 - **Distance lines stay within a single frame.** Cross-frame distance would require postMessage plumbing across cross-origin iframes — design decision, not a bug.
 - **Multiple selections produce multiple panels** when inspecting different frames at once. Esc clears them.
 - **No persistence of selection or ruler across reloads.** Planned.
@@ -178,7 +179,7 @@ python3 icons/generate.py
 
 ## Keywords
 
-Chrome extension · Firefox extension · Safari web extension · Figma DevTools alternative · pixel-perfect QA · CSS inspector · web design QA · UX inspection tool · padding margin measurement · element distance overlay · responsive viewport simulator · Manifest V3 · source-available · noncommercial · PolyForm Noncommercial
+Chrome extension · Microsoft Edge extension · Firefox extension · Safari web extension · Figma DevTools alternative · pixel-perfect QA · CSS inspector · web design QA · UX inspection tool · padding margin measurement · element distance overlay · responsive viewport simulator · Manifest V3 · source-available · noncommercial · PolyForm Noncommercial
 
 ---
 
@@ -195,7 +196,7 @@ When proposing UX changes, prefer iteration on `IDEA.md`'s decision log over rew
 - v0.10 — gray letterbox around the responsive viewport area to match DevTools' Device Mode visual; rotate (W ↔ H) button; DPR override.
 - v0.11 — persistent selection and ruler across reloads (selector cache).
 - v0.12 — comparison against Figma frames via the Figma REST API.
-- v0.13 — Mozilla Add-ons listing and Mac App Store package for Safari.
+- v0.13 — Mozilla Add-ons listing, Microsoft Edge Add-ons listing, and Mac App Store package for Safari.
 
 ---
 

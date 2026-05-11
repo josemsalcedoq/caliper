@@ -10,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -92,8 +91,14 @@ Icon
 assets/generate-brand.py
 icons/generate.py
 
-# Chrome Web Store packaging output
-dist/
+# Chrome Web Store / Edge Add-ons packaging output.
+# Ignore everything in dist/ EXCEPT the signed .crx so that users can
+# install Caliper without going through the store. The .pem (private
+# signing key) MUST stay ignored — it lives only on the maintainer's
+# machine; leaking it would let an attacker publish forged updates
+# under the same extension ID.
+dist/*
+!dist/*.crx
 
 # Local submission notes (not shipped, not pushed)
 STORE_SUBMISSION.md

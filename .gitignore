@@ -87,3 +87,13 @@ Icon
 
 # Logs
 *.log
+
+# Local dev helpers (kept locally, not shipped)
+assets/generate-brand.py
+icons/generate.py
+
+# Chrome Web Store packaging output
+dist/
+
+# Local submission notes (not shipped, not pushed)
+STORE_SUBMISSION.md
